@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Minus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface SaleItem {
   id: string;
@@ -18,6 +20,9 @@ interface Sale {
   id: string;
   items: SaleItem[];
   total: number;
+  paymentMethod: string;
+  amountPaid: number;
+  change: number;
   timestamp: Date;
 }
 
@@ -26,6 +31,8 @@ export const SalesPanel = () => {
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [amountPaid, setAmountPaid] = useState("");
 
   const addItemToSale = () => {
     if (!itemName || !itemPrice) return;
@@ -54,21 +61,41 @@ export const SalesPanel = () => {
     if (currentSale.length === 0) return;
 
     const total = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const paidAmount = parseFloat(amountPaid) || total;
+    const change = Math.max(0, paidAmount - total);
+
     const newSale: Sale = {
       id: Date.now().toString(),
       items: [...currentSale],
       total,
+      paymentMethod,
+      amountPaid: paidAmount,
+      change,
       timestamp: new Date()
     };
 
     setSalesHistory([newSale, ...salesHistory]);
     setCurrentSale([]);
+    setAmountPaid("");
+    setPaymentMethod("cash");
     
-    // Here you would also update inventory
     console.log("Sale completed:", newSale);
   };
 
   const currentTotal = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  const getPaymentMethodBadge = (method: string) => {
+    switch (method) {
+      case "cash":
+        return <Badge variant="secondary">Cash</Badge>;
+      case "card":
+        return <Badge variant="default">Card</Badge>;
+      case "digital":
+        return <Badge className="bg-green-100 text-green-800">Digital</Badge>;
+      default:
+        return <Badge variant="outline">{method}</Badge>;
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -76,7 +103,7 @@ export const SalesPanel = () => {
       <Card>
         <CardHeader>
           <CardTitle>New Sale</CardTitle>
-          <CardDescription>Add items to the current sale</CardDescription>
+          <CardDescription>Add items and process payment</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -107,7 +134,7 @@ export const SalesPanel = () => {
 
           {/* Current Sale Items */}
           {currentSale.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <h4 className="font-medium">Current Sale Items:</h4>
               {currentSale.map((item) => (
                 <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
@@ -131,9 +158,48 @@ export const SalesPanel = () => {
                   </div>
                 </div>
               ))}
-              <div className="text-right font-bold">
+              
+              <div className="text-right font-bold text-lg">
                 Total: ${currentTotal.toFixed(2)}
               </div>
+
+              {/* Payment Section */}
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="font-medium">Payment Details:</h4>
+                <div>
+                  <Label htmlFor="paymentMethod">Payment Method</Label>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="card">Credit/Debit Card</SelectItem>
+                      <SelectItem value="digital">Digital Wallet</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {paymentMethod === "cash" && (
+                  <div>
+                    <Label htmlFor="amountPaid">Amount Paid</Label>
+                    <Input
+                      id="amountPaid"
+                      type="number"
+                      step="0.01"
+                      value={amountPaid}
+                      onChange={(e) => setAmountPaid(e.target.value)}
+                      placeholder={currentTotal.toFixed(2)}
+                    />
+                    {amountPaid && parseFloat(amountPaid) > currentTotal && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Change: ${(parseFloat(amountPaid) - currentTotal).toFixed(2)}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <Button onClick={completeSale} className="w-full">
                 Complete Sale
               </Button>
@@ -154,6 +220,7 @@ export const SalesPanel = () => {
               <TableRow>
                 <TableHead>Time</TableHead>
                 <TableHead>Items</TableHead>
+                <TableHead>Payment</TableHead>
                 <TableHead>Total</TableHead>
               </TableRow>
             </TableHeader>
@@ -162,6 +229,7 @@ export const SalesPanel = () => {
                 <TableRow key={sale.id}>
                   <TableCell>{sale.timestamp.toLocaleTimeString()}</TableCell>
                   <TableCell>{sale.items.length} items</TableCell>
+                  <TableCell>{getPaymentMethodBadge(sale.paymentMethod)}</TableCell>
                   <TableCell>${sale.total.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
