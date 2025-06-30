@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 const Index = () => {
   return (
@@ -11,12 +11,12 @@ const Index = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4 text-gray-900">Welcome to Your System</h1>
           <p className="text-xl text-gray-600 mb-8">
-            Manage your account and access all features with ease
+            Sign in to access your account
           </p>
         </div>
         
-        <div className="flex flex-col md:flex-row gap-6 justify-center items-center max-w-2xl mx-auto">
-          <Card className="w-full md:w-80">
+        <div className="flex justify-center items-center max-w-md mx-auto">
+          <Card className="w-full">
             <CardHeader className="text-center">
               <div className="flex items-center justify-center mb-4">
                 <div className="flex items-center justify-center w-12 h-12 bg-primary rounded-full">
@@ -25,34 +25,13 @@ const Index = () => {
               </div>
               <CardTitle>Sign In</CardTitle>
               <CardDescription>
-                Access your existing account
+                Access your account with username and password
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link to="/login">
                 <Button className="w-full" size="lg">
                   Sign In
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-          
-          <Card className="w-full md:w-80">
-            <CardHeader className="text-center">
-              <div className="flex items-center justify-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-secondary rounded-full">
-                  <UserPlus className="h-6 w-6 text-secondary-foreground" />
-                </div>
-              </div>
-              <CardTitle>Create Account</CardTitle>
-              <CardDescription>
-                New user? Get started here
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/register">
-                <Button variant="secondary" className="w-full" size="lg">
-                  Sign Up
                 </Button>
               </Link>
             </CardContent>
