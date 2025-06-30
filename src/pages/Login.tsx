@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -44,9 +46,11 @@ const Login = () => {
       // Simulate login API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // For demo purposes, show success
+      // For demo purposes, accept any valid credentials
       console.log("Login data:", data);
-      alert("Login successful! (This is a demo)");
+      
+      // Navigate to dashboard on successful login
+      navigate("/dashboard");
       
     } catch (error) {
       setLoginError("Invalid username or password. Please try again.");
@@ -66,7 +70,7 @@ const Login = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
           <CardDescription className="text-center">
-            Sign in to your account to continue
+            Sign in to access the restaurant management system
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
