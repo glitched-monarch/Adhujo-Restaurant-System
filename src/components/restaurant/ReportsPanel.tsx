@@ -97,10 +97,12 @@ export const ReportsPanel = () => {
   const totalOrders = dailySales.reduce((sum, day) => sum + day.orders, 0);
   const averageOrderValue = totalRevenue / totalOrders;
 
-  const calculateTotal = (obj: any): number => {
-    return Object.values(obj).reduce((sum: number, value: any) => {
+  const calculateTotal = (obj: Record<string, any>): number => {
+    return Object.values(obj).reduce((sum: number, value: unknown) => {
       if (typeof value === 'number') return sum + value;
-      if (typeof value === 'object') return sum + calculateTotal(value);
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        return sum + calculateTotal(value as Record<string, any>);
+      }
       return sum;
     }, 0);
   };
