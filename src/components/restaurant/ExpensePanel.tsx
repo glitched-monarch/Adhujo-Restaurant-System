@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, TrendingUp, TrendingDown, Calendar, Target } from "lucide-react";
+import { ExpensePredictionPanel } from "./ExpensePredictionPanel";
 
 interface Expense {
   id: string;
@@ -137,117 +139,136 @@ export const ExpensePanel = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Add New Expense */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Log New Expense</CardTitle>
-            <CardDescription>Record business expenses</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                value={newExpense.description}
-                onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-                placeholder="Enter expense description"
-              />
-            </div>
-            <div>
-              <Label htmlFor="amount">Amount</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={newExpense.amount}
-                onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                placeholder="0.00"
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
-              <Select value={newExpense.category} onValueChange={(value) => setNewExpense({ ...newExpense, category: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Inventory">Inventory</SelectItem>
-                  <SelectItem value="Utilities">Utilities</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={addExpense} className="w-full">
-              Add Expense
-            </Button>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="actual" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="actual" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Actual Expenses
+          </TabsTrigger>
+          <TabsTrigger value="predictions" className="flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Expense Predictions
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Expense Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Expense Summary</CardTitle>
-            <CardDescription>Recent expense breakdown</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="text-sm">
-                <div className="flex justify-between mb-2">
-                  <span>Today's Total:</span>
-                  <span className="font-semibold">${todaysExpenses.toFixed(2)}</span>
+        <TabsContent value="actual" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Add New Expense */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Log New Expense</CardTitle>
+                <CardDescription>Record business expenses</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    value={newExpense.description}
+                    onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                    placeholder="Enter expense description"
+                  />
                 </div>
-                <div className="flex justify-between mb-2">
-                  <span>This Week:</span>
-                  <span className="font-semibold">${expenses.reduce((sum, exp) => sum + exp.amount, 0).toFixed(2)}</span>
+                <div>
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={newExpense.amount}
+                    onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                    placeholder="0.00"
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>Average Daily:</span>
-                  <span className="font-semibold">${(expenses.reduce((sum, exp) => sum + exp.amount, 0) / 7).toFixed(2)}</span>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={newExpense.category} onValueChange={(value) => setNewExpense({ ...newExpense, category: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Inventory">Inventory</SelectItem>
+                      <SelectItem value="Utilities">Utilities</SelectItem>
+                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                <Button onClick={addExpense} className="w-full">
+                  Add Expense
+                </Button>
+              </CardContent>
+            </Card>
 
-      {/* Expense History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Expense History</CardTitle>
-          <CardDescription>Recent expense records</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Added By</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {expenses.map((expense) => (
-                <TableRow key={expense.id}>
-                  <TableCell>{expense.date.toLocaleDateString()}</TableCell>
-                  <TableCell className="font-medium">{expense.description}</TableCell>
-                  <TableCell>
-                    <Badge className={getCategoryColor(expense.category)}>
-                      {expense.category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>${expense.amount.toFixed(2)}</TableCell>
-                  <TableCell>{expense.addedBy}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            {/* Expense Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Expense Summary</CardTitle>
+                <CardDescription>Recent expense breakdown</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-sm">
+                    <div className="flex justify-between mb-2">
+                      <span>Today's Total:</span>
+                      <span className="font-semibold">${todaysExpenses.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between mb-2">
+                      <span>This Week:</span>
+                      <span className="font-semibold">${expenses.reduce((sum, exp) => sum + exp.amount, 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Average Daily:</span>
+                      <span className="font-semibold">${(expenses.reduce((sum, exp) => sum + exp.amount, 0) / 7).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Expense History */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Expense History</CardTitle>
+              <CardDescription>Recent expense records</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Added By</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenses.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell>{expense.date.toLocaleDateString()}</TableCell>
+                      <TableCell className="font-medium">{expense.description}</TableCell>
+                      <TableCell>
+                        <Badge className={getCategoryColor(expense.category)}>
+                          {expense.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>${expense.amount.toFixed(2)}</TableCell>
+                      <TableCell>{expense.addedBy}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="predictions">
+          <ExpensePredictionPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
