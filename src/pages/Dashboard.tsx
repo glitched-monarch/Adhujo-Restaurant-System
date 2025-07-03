@@ -6,6 +6,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { SalesPanel } from "@/components/restaurant/SalesPanel";
 import { InventoryPanel } from "@/components/restaurant/InventoryPanel";
 import { ReportsPanel } from "@/components/restaurant/ReportsPanel";
+import { EnhancedReportsPanel } from "@/components/restaurant/EnhancedReportsPanel";
+import { FinancialDashboard } from "@/components/restaurant/FinancialDashboard";
 import { UsersPanel } from "@/components/restaurant/UsersPanel";
 import { ExpensePanel } from "@/components/restaurant/ExpensePanel";
 import { MenuManagementPanel } from "@/components/restaurant/MenuManagementPanel";
@@ -27,6 +29,7 @@ const Dashboard = () => {
   const canAccessReports = userRole === "admin" || userRole === "manager";
   const canAccessMenu = userRole === "admin" || userRole === "manager";
   const canAccessSettings = userRole === "admin";
+  const canAccessFinancials = userRole === "admin" || userRole === "manager";
 
   const renderActivePanel = () => {
     switch (activeTab) {
@@ -39,7 +42,9 @@ const Dashboard = () => {
       case 'expenses':
         return canAccessExpenses ? <ExpensePanel /> : <div>Access Denied</div>;
       case 'reports':
-        return canAccessReports ? <ReportsPanel /> : <div>Access Denied</div>;
+        return canAccessReports ? <EnhancedReportsPanel /> : <div>Access Denied</div>;
+      case 'financial':
+        return canAccessFinancials ? <FinancialDashboard /> : <div>Access Denied</div>;
       case 'users':
         return canAccessUsers ? <UsersPanel /> : <div>Access Denied</div>;
       case 'logs':
@@ -48,6 +53,21 @@ const Dashboard = () => {
         return canAccessSettings ? <SystemSettingsPanel /> : <div>Access Denied</div>;
       default:
         return <SalesPanel />;
+    }
+  };
+
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case 'sales': return 'Sales Management';
+      case 'inventory': return 'Inventory Management';
+      case 'menu': return 'Menu Management';
+      case 'expenses': return 'Expense Management';
+      case 'reports': return 'Advanced Reports';
+      case 'financial': return 'Financial Dashboard';
+      case 'users': return 'User Management';
+      case 'logs': return 'Access Logs';
+      case 'settings': return 'System Settings';
+      default: return 'Dashboard';
     }
   };
 
@@ -60,16 +80,7 @@ const Dashboard = () => {
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
             <div className="flex-1">
-              <h1 className="text-xl font-semibold">
-                {activeTab === 'sales' && 'Sales Management'}
-                {activeTab === 'inventory' && 'Inventory Management'}
-                {activeTab === 'menu' && 'Menu Management'}
-                {activeTab === 'expenses' && 'Expense Management'}
-                {activeTab === 'reports' && 'Reports & Analytics'}
-                {activeTab === 'users' && 'User Management'}
-                {activeTab === 'logs' && 'Access Logs'}
-                {activeTab === 'settings' && 'System Settings'}
-              </h1>
+              <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
             </div>
           </header>
 

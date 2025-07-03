@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -15,16 +15,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import {
-  DollarSign,
-  Package,
-  FileText,
-  Users,
-  Receipt,
-  MenuSquare,
-  ClipboardList,
-  Settings,
+import { 
+  ShoppingCart, 
+  Package, 
+  Receipt, 
+  BarChart3, 
+  Users, 
+  Settings, 
   LogOut,
+  ChefHat,
+  Calculator,
+  TrendingUp,
+  ShieldCheck
 } from "lucide-react";
 
 interface AppSidebarProps {
@@ -32,96 +34,159 @@ interface AppSidebarProps {
   onLogout: () => void;
 }
 
-export function AppSidebar({ userRole, onLogout }: AppSidebarProps) {
-  const { state } = useSidebar();
-  const location = useLocation();
-  const currentPath = location.pathname;
+export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { collapsed } = useSidebar();
+  
+  const activeTab = searchParams.get('tab') || 'sales';
 
-  const canAccessUsers = userRole === "admin";
-  const canAccessExpenses = userRole === "admin" || userRole === "manager";
-  const canAccessReports = userRole === "admin" || userRole === "manager";
-  const canAccessMenu = userRole === "admin" || userRole === "manager";
-  const canAccessSettings = userRole === "admin";
+  const handleTabChange = (tab: string) => {
+    setSearchParams({ tab });
+  };
 
-  const mainMenuItems = [
-    { title: "Sales", url: "/dashboard?tab=sales", icon: DollarSign, available: true },
-    { title: "Inventory", url: "/dashboard?tab=inventory", icon: Package, available: true },
-    { title: "Menu Management", url: "/dashboard?tab=menu", icon: MenuSquare, available: canAccessMenu },
-    { title: "Expenses", url: "/dashboard?tab=expenses", icon: Receipt, available: canAccessExpenses },
-    { title: "Reports & Analytics", url: "/dashboard?tab=reports", icon: FileText, available: canAccessReports },
+  const menuItems = [
+    { 
+      id: 'sales', 
+      label: 'Sales', 
+      icon: ShoppingCart, 
+      description: 'Process sales and transactions',
+      access: ['admin', 'manager', 'staff'] 
+    },
+    { 
+      id: 'inventory', 
+      label: 'Inventory', 
+      icon: Package, 
+      description: 'Manage stock and supplies',
+      access: ['admin', 'manager', 'staff'] 
+    },
+    { 
+      id: 'menu', 
+      label: 'Menu', 
+      icon: ChefHat, 
+      description: 'Manage menu items and pricing',
+      access: ['admin', 'manager'] 
+    },
+    { 
+      id: 'expenses', 
+      label: 'Expenses', 
+      icon: Receipt, 
+      description: 'Track business expenses',
+      access: ['admin', 'manager'] 
+    },
+    { 
+      id: 'financial', 
+      label: 'Financial', 
+      icon: Calculator, 
+      description: 'Financial dashboard and KPIs',
+      access: ['admin', 'manager'] 
+    },
+    { 
+      id: 'reports', 
+      label: 'Reports', 
+      icon: BarChart3, 
+      description: 'Advanced business reports',
+      access: ['admin', 'manager'] 
+    }
   ];
 
-  const systemMenuItems = [
-    { title: "Users", url: "/dashboard?tab=users", icon: Users, available: canAccessUsers },
-    { title: "Access Logs", url: "/dashboard?tab=logs", icon: ClipboardList, available: canAccessUsers },
-    { title: "System Settings", url: "/dashboard?tab=settings", icon: Settings, available: canAccessSettings },
+  const adminMenuItems = [
+    { 
+      id: 'users', 
+      label: 'Users', 
+      icon: Users, 
+      description: 'Manage user accounts',
+      access: ['admin'] 
+    },
+    { 
+      id: 'logs', 
+      label: 'Access Logs', 
+      icon: ShieldCheck, 
+      description: 'System access logs',
+      access: ['admin'] 
+    },
+    { 
+      id: 'settings', 
+      label: 'Settings', 
+      icon: Settings, 
+      description: 'System configuration',
+      access: ['admin'] 
+    }
   ];
 
-  const isActive = (url: string) => {
-    const urlParams = new URLSearchParams(url.split('?')[1]);
-    const currentParams = new URLSearchParams(location.search);
-    return urlParams.get('tab') === currentParams.get('tab');
+  const canAccess = (item: { access: string[] }) => {
+    return item.access.includes(userRole);
   };
 
   return (
-    <Sidebar className={state === "collapsed" ? "w-14" : "w-64"}>
-      <SidebarHeader className="p-4">
-        {state !== "collapsed" && (
-          <div>
-            <h2 className="text-lg font-bold text-primary">Adhujo Restaurant</h2>
-            <p className="text-sm text-muted-foreground">Role: {userRole}</p>
+    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible>
+      <SidebarHeader className="border-b p-4">
+        {!collapsed && (
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-6 w-6 text-primary" />
+            <span className="font-bold text-lg">Adhujo ERP</span>
+          </div>
+        )}
+        {collapsed && (
+          <div className="flex justify-center">
+            <TrendingUp className="h-6 w-6 text-primary" />
           </div>
         )}
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>Operations</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainMenuItems
-                .filter(item => item.available)
-                .map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        {state !== "collapsed" && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+              {menuItems.filter(canAccess).map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    onClick={() => handleTabChange(item.id)}
+                    isActive={activeTab === item.id}
+                    className="w-full justify-start"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {!collapsed && <span className="ml-2">{item.label}</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>System</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {systemMenuItems
-                .filter(item => item.available)
-                .map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        {state !== "collapsed" && <span>{item.title}</span>}
-                      </NavLink>
+        {userRole === 'admin' && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminMenuItems.filter(canAccess).map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      onClick={() => handleTabChange(item.id)}
+                      isActive={activeTab === item.id}
+                      className="w-full justify-start"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span className="ml-2">{item.label}</span>}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        <Button variant="outline" onClick={onLogout} className="w-full">
+      <SidebarFooter className="border-t p-4">
+        <Button
+          variant="ghost"
+          onClick={onLogout}
+          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
           <LogOut className="h-4 w-4" />
-          {state !== "collapsed" && <span className="ml-2">Logout</span>}
+          {!collapsed && <span className="ml-2">Logout</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>
   );
-}
+};
