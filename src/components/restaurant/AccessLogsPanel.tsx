@@ -4,11 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, CheckCircle, XCircle, User, Clock } from "lucide-react";
+import { Search, CheckCircle, XCircle, User, Clock } from "lucide-react";
+import { DateRangeFilter, DateRange } from "@/components/common/DateRangeFilter";
+import { isWithinInterval, parseISO } from "date-fns";
 
 export const AccessLogsPanel = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange | null>(null);
 
   // Mock data for access logs
   const accessLogs = [
@@ -61,7 +64,12 @@ export const AccessLogsPanel = () => {
                          (statusFilter === "success" && log.success) ||
                          (statusFilter === "failed" && !log.success);
     
-    return matchesSearch && matchesStatus;
+    const matchesDateRange = !dateRange || isWithinInterval(
+      new Date(log.timestamp),
+      { start: dateRange.from, end: dateRange.to }
+    );
+    
+    return matchesSearch && matchesStatus && matchesDateRange;
   });
 
   return (
@@ -71,27 +79,30 @@ export const AccessLogsPanel = () => {
         <p className="text-gray-600">Monitor all system activities and user actions</p>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search by user or action..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      <div className="space-y-4">
+        <DateRangeFilter onDateRangeChange={setDateRange} />
+        
+        <div className="flex gap-4 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search by user or action..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="success">Success Only</SelectItem>
+              <SelectItem value="failed">Failed Only</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="success">Success Only</SelectItem>
-            <SelectItem value="failed">Failed Only</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="space-y-3">

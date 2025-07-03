@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,24 +6,40 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, DollarSign, Package, TrendingUp, TrendingDown, FileText } from "lucide-react";
+import { DateRangeFilter, DateRange } from "@/components/common/DateRangeFilter";
+import { isWithinInterval, parseISO } from "date-fns";
 
 export const ReportsPanel = () => {
+  const [dateRange, setDateRange] = useState<DateRange | null>(null);
+
   // Mock data for demonstration
-  const dailySales = [
+  const allDailySales = [
     { date: "2024-01-01", sales: 1250.00, orders: 45 },
     { date: "2024-01-02", sales: 1380.50, orders: 52 },
     { date: "2024-01-03", sales: 1100.75, orders: 38 },
     { date: "2024-01-04", sales: 1520.25, orders: 58 },
     { date: "2024-01-05", sales: 1650.00, orders: 62 },
+    { date: "2023-12-15", sales: 980.00, orders: 35 },
+    { date: "2023-12-16", sales: 1200.50, orders: 42 },
+    { date: "2023-11-20", sales: 850.75, orders: 28 },
   ];
 
-  const topItems = [
+  const allTopItems = [
     { name: "Margherita Pizza", sold: 125, revenue: 1875.00 },
     { name: "Caesar Salad", sold: 98, revenue: 1176.00 },
     { name: "Chicken Burger", sold: 87, revenue: 1305.00 },
     { name: "Pasta Carbonara", sold: 76, revenue: 1140.00 },
     { name: "Fish & Chips", sold: 65, revenue: 975.00 },
   ];
+
+  // Filter data based on date range
+  const filteredDailySales = dateRange 
+    ? allDailySales.filter(day => 
+        isWithinInterval(new Date(day.date), { start: dateRange.from, end: dateRange.to })
+      )
+    : allDailySales;
+
+  const filteredTopItems = allTopItems; // In a real app, this would also be filtered
 
   // Financial statement mock data
   const balanceSheetData = {
@@ -93,9 +109,9 @@ export const ReportsPanel = () => {
     }
   };
 
-  const totalRevenue = dailySales.reduce((sum, day) => sum + day.sales, 0);
-  const totalOrders = dailySales.reduce((sum, day) => sum + day.orders, 0);
-  const averageOrderValue = totalRevenue / totalOrders;
+  const totalRevenue = filteredDailySales.reduce((sum, day) => sum + day.sales, 0);
+  const totalOrders = filteredDailySales.reduce((sum, day) => sum + day.orders, 0);
+  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
   const calculateTotal = (obj: Record<string, any>): number => {
     return Object.values(obj).reduce((sum: number, value: unknown) => {
@@ -122,6 +138,13 @@ export const ReportsPanel = () => {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">Reports & Analytics</h2>
+        <p className="text-gray-600">Comprehensive financial reports and business analytics</p>
+      </div>
+
+      <DateRangeFilter onDateRangeChange={setDateRange} />
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -131,7 +154,9 @@ export const ReportsPanel = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Last 5 days</p>
+            <p className="text-xs text-muted-foreground">
+              {dateRange ? 'Selected period' : 'All time'}
+            </p>
           </CardContent>
         </Card>
 
@@ -142,7 +167,9 @@ export const ReportsPanel = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalOrders}</div>
-            <p className="text-xs text-muted-foreground">Last 5 days</p>
+            <p className="text-xs text-muted-foreground">
+              {dateRange ? 'Selected period' : 'All time'}
+            </p>
           </CardContent>
         </Card>
 
@@ -186,7 +213,9 @@ export const ReportsPanel = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Daily Sales Report</CardTitle>
-                <CardDescription>Sales performance by day</CardDescription>
+                <CardDescription>
+                  {dateRange ? 'Sales performance for selected period' : 'Sales performance by day'}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -198,7 +227,7 @@ export const ReportsPanel = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {dailySales.map((day) => (
+                    {filteredDailySales.map((day) => (
                       <TableRow key={day.date}>
                         <TableCell>{new Date(day.date).toLocaleDateString()}</TableCell>
                         <TableCell>{day.orders}</TableCell>
@@ -207,6 +236,11 @@ export const ReportsPanel = () => {
                     ))}
                   </TableBody>
                 </Table>
+                {filteredDailySales.length === 0 && (
+                  <div className="text-center py-4 text-gray-500">
+                    No sales data found for the selected date range.
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -226,7 +260,7 @@ export const ReportsPanel = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {topItems.map((item) => (
+                    {filteredTopItems.map((item) => (
                       <TableRow key={item.name}>
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell>{item.sold}</TableCell>
