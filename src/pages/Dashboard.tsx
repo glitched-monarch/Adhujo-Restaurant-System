@@ -28,7 +28,7 @@ const Dashboard = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="flex items-center justify-between p-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Restaurant Management System</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Adhujo Restaurant System</h1>
             <p className="text-sm text-gray-600">Logged in as: {userRole}</p>
           </div>
           <Button variant="outline" onClick={handleLogout}>

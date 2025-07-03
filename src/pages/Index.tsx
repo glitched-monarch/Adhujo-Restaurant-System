@@ -9,9 +9,9 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">Welcome to Your System</h1>
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">Welcome to Adhujo Restaurant System</h1>
           <p className="text-xl text-gray-600 mb-8">
-            Sign in to access your account
+            Complete Restaurant Management Solution - Sign in to access your account
           </p>
         </div>
         
@@ -25,7 +25,7 @@ const Index = () => {
               </div>
               <CardTitle>Sign In</CardTitle>
               <CardDescription>
-                Access your account with username and password
+                Access your restaurant management dashboard
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -40,7 +40,7 @@ const Index = () => {
         
         <div className="text-center mt-12">
           <p className="text-gray-500">
-            Secure, fast, and reliable system access
+            Secure, fast, and reliable restaurant management system
           </p>
         </div>
       </div>

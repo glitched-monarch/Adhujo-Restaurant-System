@@ -70,7 +70,7 @@ const Login = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
           <CardDescription className="text-center">
-            Sign in to access the restaurant management system
+            Sign in to access the Adhujo Restaurant System
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
