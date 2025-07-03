@@ -1,18 +1,22 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { SalesPanel } from "@/components/restaurant/SalesPanel";
 import { InventoryPanel } from "@/components/restaurant/InventoryPanel";
 import { ReportsPanel } from "@/components/restaurant/ReportsPanel";
 import { UsersPanel } from "@/components/restaurant/UsersPanel";
 import { ExpensePanel } from "@/components/restaurant/ExpensePanel";
-import { DollarSign, Package, FileText, Users, LogOut, Receipt } from "lucide-react";
+import { MenuManagementPanel } from "@/components/restaurant/MenuManagementPanel";
+import { AccessLogsPanel } from "@/components/restaurant/AccessLogsPanel";
+import { SystemSettingsPanel } from "@/components/restaurant/SystemSettingsPanel";
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("sales");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [userRole, setUserRole] = useState<"admin" | "manager" | "staff">("admin"); // Mock user role
+  
+  const activeTab = searchParams.get('tab') || 'sales';
 
   const handleLogout = () => {
     window.location.href = "/login";
@@ -21,83 +25,61 @@ const Dashboard = () => {
   const canAccessUsers = userRole === "admin";
   const canAccessExpenses = userRole === "admin" || userRole === "manager";
   const canAccessReports = userRole === "admin" || userRole === "manager";
+  const canAccessMenu = userRole === "admin" || userRole === "manager";
+  const canAccessSettings = userRole === "admin";
+
+  const renderActivePanel = () => {
+    switch (activeTab) {
+      case 'sales':
+        return <SalesPanel />;
+      case 'inventory':
+        return <InventoryPanel />;
+      case 'menu':
+        return canAccessMenu ? <MenuManagementPanel /> : <div>Access Denied</div>;
+      case 'expenses':
+        return canAccessExpenses ? <ExpensePanel /> : <div>Access Denied</div>;
+      case 'reports':
+        return canAccessReports ? <ReportsPanel /> : <div>Access Denied</div>;
+      case 'users':
+        return canAccessUsers ? <UsersPanel /> : <div>Access Denied</div>;
+      case 'logs':
+        return canAccessUsers ? <AccessLogsPanel /> : <div>Access Denied</div>;
+      case 'settings':
+        return canAccessSettings ? <SystemSettingsPanel /> : <div>Access Denied</div>;
+      default:
+        return <SalesPanel />;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="flex items-center justify-between p-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Adhujo Restaurant System</h1>
-            <p className="text-sm text-gray-600">Logged in as: {userRole}</p>
-          </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </header>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar userRole={userRole} onLogout={handleLogout} />
+        <SidebarInset>
+          {/* Header */}
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <div className="flex-1">
+              <h1 className="text-xl font-semibold">
+                {activeTab === 'sales' && 'Sales Management'}
+                {activeTab === 'inventory' && 'Inventory Management'}
+                {activeTab === 'menu' && 'Menu Management'}
+                {activeTab === 'expenses' && 'Expense Management'}
+                {activeTab === 'reports' && 'Reports & Analytics'}
+                {activeTab === 'users' && 'User Management'}
+                {activeTab === 'logs' && 'Access Logs'}
+                {activeTab === 'settings' && 'System Settings'}
+              </h1>
+            </div>
+          </header>
 
-      {/* Main Content */}
-      <div className="container mx-auto p-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="sales" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Sales
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Inventory
-            </TabsTrigger>
-            {canAccessExpenses && (
-              <TabsTrigger value="expenses" className="flex items-center gap-2">
-                <Receipt className="h-4 w-4" />
-                Expenses
-              </TabsTrigger>
-            )}
-            {canAccessReports && (
-              <TabsTrigger value="reports" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Reports
-              </TabsTrigger>
-            )}
-            {canAccessUsers && (
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Users
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="sales" className="mt-6">
-            <SalesPanel />
-          </TabsContent>
-
-          <TabsContent value="inventory" className="mt-6">
-            <InventoryPanel />
-          </TabsContent>
-
-          {canAccessExpenses && (
-            <TabsContent value="expenses" className="mt-6">
-              <ExpensePanel />
-            </TabsContent>
-          )}
-
-          {canAccessReports && (
-            <TabsContent value="reports" className="mt-6">
-              <ReportsPanel />
-            </TabsContent>
-          )}
-
-          {canAccessUsers && (
-            <TabsContent value="users" className="mt-6">
-              <UsersPanel />
-            </TabsContent>
-          )}
-        </Tabs>
+          {/* Main Content */}
+          <main className="flex-1 p-6">
+            {renderActivePanel()}
+          </main>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
