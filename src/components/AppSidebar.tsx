@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -36,9 +35,10 @@ interface AppSidebarProps {
 
 export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
   
   const activeTab = searchParams.get('tab') || 'sales';
+  const isCollapsed = state === "collapsed";
 
   const handleTabChange = (tab: string) => {
     setSearchParams({ tab });
@@ -118,15 +118,15 @@ export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible>
+    <Sidebar className={isCollapsed ? "w-16" : "w-64"} collapsible="offcanvas">
       <SidebarHeader className="border-b p-4">
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg">Adhujo ERP</span>
           </div>
         )}
-        {collapsed && (
+        {isCollapsed && (
           <div className="flex justify-center">
             <TrendingUp className="h-6 w-6 text-primary" />
           </div>
@@ -146,7 +146,7 @@ export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
                     className="w-full justify-start"
                   >
                     <item.icon className="h-4 w-4" />
-                    {!collapsed && <span className="ml-2">{item.label}</span>}
+                    {!isCollapsed && <span className="ml-2">{item.label}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -167,7 +167,7 @@ export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
                       className="w-full justify-start"
                     >
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span className="ml-2">{item.label}</span>}
+                      {!isCollapsed && <span className="ml-2">{item.label}</span>}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -184,7 +184,7 @@ export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
           className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="ml-2">Logout</span>}
+          {!isCollapsed && <span className="ml-2">Logout</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>
