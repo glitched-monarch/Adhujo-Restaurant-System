@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,12 +25,41 @@ interface AccompanimentDialogProps {
 export const AccompanimentDialog = ({ isOpen, onClose, mainItem, onConfirm }: AccompanimentDialogProps) => {
   const [selectedAccompaniments, setSelectedAccompaniments] = useState<string[]>([]);
 
-  const handleAccompanimentToggle = (accompanimentId: string) => {
-    setSelectedAccompaniments(prev => 
-      prev.includes(accompanimentId)
-        ? prev.filter(id => id !== accompanimentId)
-        : [...prev, accompanimentId]
-    );
+  // Reset selections when dialog opens with a new item
+  useEffect(() => {
+    if (isOpen) {
+      // Auto-select required accompaniments
+      const requiredIds = mainItem.accompaniments
+        .filter(acc => acc.required)
+        .map(acc => acc.id);
+      setSelectedAccompaniments(requiredIds);
+    }
+  }, [isOpen, mainItem]);
+
+  const handleAccompanimentToggle = (accompanimentId: string, isRequired: boolean) => {
+    if (isRequired) {
+      // Required accompaniments can be toggled between options but at least one must be selected
+      const requiredAccompaniments = mainItem.accompaniments.filter(acc => acc.required);
+      const otherRequiredSelected = selectedAccompaniments.filter(id => 
+        id !== accompanimentId && requiredAccompaniments.some(acc => acc.id === id)
+      );
+      
+      if (selectedAccompaniments.includes(accompanimentId)) {
+        // Only allow deselection if other required items are selected
+        if (otherRequiredSelected.length > 0) {
+          setSelectedAccompaniments(prev => prev.filter(id => id !== accompanimentId));
+        }
+      } else {
+        setSelectedAccompaniments(prev => [...prev, accompanimentId]);
+      }
+    } else {
+      // Optional accompaniments can be freely toggled
+      setSelectedAccompaniments(prev => 
+        prev.includes(accompanimentId)
+          ? prev.filter(id => id !== accompanimentId)
+          : [...prev, accompanimentId]
+      );
+    }
   };
 
   const handleConfirm = () => {
@@ -42,11 +71,15 @@ export const AccompanimentDialog = ({ isOpen, onClose, mainItem, onConfirm }: Ac
     onClose();
   };
 
+  const handleCancel = () => {
+    setSelectedAccompaniments([]);
+    onClose();
+  };
+
   const requiredAccompaniments = mainItem.accompaniments.filter(acc => acc.required);
   const optionalAccompaniments = mainItem.accompaniments.filter(acc => !acc.required);
-  const allRequiredSelected = requiredAccompaniments.every(acc => 
-    selectedAccompaniments.includes(acc.id)
-  );
+  const hasRequiredSelected = requiredAccompaniments.length === 0 || 
+    requiredAccompaniments.some(acc => selectedAccompaniments.includes(acc.id));
 
   const totalExtraPrice = selectedAccompaniments.reduce((sum, accId) => {
     const acc = mainItem.accompaniments.find(a => a.id === accId);
@@ -66,14 +99,19 @@ export const AccompanimentDialog = ({ isOpen, onClose, mainItem, onConfirm }: Ac
         <div className="space-y-6">
           {requiredAccompaniments.length > 0 && (
             <div>
-              <h4 className="font-medium text-red-700 mb-3">Required Accompaniments</h4>
+              <h4 className="font-medium text-red-700 mb-3">
+                Required Accompaniments 
+                <span className="text-sm font-normal text-gray-600 ml-2">
+                  (Choose at least one)
+                </span>
+              </h4>
               <div className="space-y-2">
                 {requiredAccompaniments.map((accompaniment) => (
                   <div key={accompaniment.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={accompaniment.id}
                       checked={selectedAccompaniments.includes(accompaniment.id)}
-                      onCheckedChange={() => handleAccompanimentToggle(accompaniment.id)}
+                      onCheckedChange={() => handleAccompanimentToggle(accompaniment.id, true)}
                     />
                     <label
                       htmlFor={accompaniment.id}
@@ -99,7 +137,7 @@ export const AccompanimentDialog = ({ isOpen, onClose, mainItem, onConfirm }: Ac
                     <Checkbox
                       id={accompaniment.id}
                       checked={selectedAccompaniments.includes(accompaniment.id)}
-                      onCheckedChange={() => handleAccompanimentToggle(accompaniment.id)}
+                      onCheckedChange={() => handleAccompanimentToggle(accompaniment.id, false)}
                     />
                     <label
                       htmlFor={accompaniment.id}
@@ -127,21 +165,21 @@ export const AccompanimentDialog = ({ isOpen, onClose, mainItem, onConfirm }: Ac
         </div>
 
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={onClose} className="flex-1">
+          <Button variant="outline" onClick={handleCancel} className="flex-1">
             Cancel
           </Button>
           <Button 
             onClick={handleConfirm} 
-            disabled={!allRequiredSelected}
+            disabled={!hasRequiredSelected}
             className="flex-1"
           >
             Confirm Selection
           </Button>
         </div>
 
-        {!allRequiredSelected && requiredAccompaniments.length > 0 && (
+        {!hasRequiredSelected && requiredAccompaniments.length > 0 && (
           <p className="text-sm text-red-600 text-center">
-            Please select all required accompaniments
+            Please select at least one required accompaniment
           </p>
         )}
       </DialogContent>

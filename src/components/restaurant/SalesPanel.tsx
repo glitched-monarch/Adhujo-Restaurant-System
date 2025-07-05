@@ -9,7 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DateRangeFilter, DateRange } from "@/components/common/DateRangeFilter";
+import { AccompanimentDialog } from "./AccompanimentDialog";
 import { isWithinInterval } from "date-fns";
+
+interface Accompaniment {
+  id: string;
+  name: string;
+  price: number;
+  required: boolean;
+}
 
 interface SaleItem {
   id: string;
@@ -18,10 +26,7 @@ interface SaleItem {
   vatAmount: number;
   totalPrice: number;
   quantity: number;
-  accompaniments?: Array<{
-    name: string;
-    price: number;
-  }>;
+  accompaniments?: Accompaniment[];
 }
 
 interface Sale {
@@ -36,14 +41,60 @@ interface Sale {
   timestamp: Date;
 }
 
+// Mock menu items with accompaniments
+const mockMenuItems = [
+  {
+    id: "1",
+    name: "Grilled Chicken",
+    basePrice: 450,
+    category: "Main Course",
+    accompaniments: [
+      { id: "acc1", name: "Rice", price: 80, required: true },
+      { id: "acc2", name: "Ugali", price: 60, required: true },
+      { id: "acc3", name: "Salad", price: 120, required: false },
+      { id: "acc4", name: "Extra Sauce", price: 30, required: false }
+    ]
+  },
+  {
+    id: "2",
+    name: "Fish Fillet",
+    basePrice: 380,
+    category: "Main Course",
+    accompaniments: [
+      { id: "acc1", name: "Rice", price: 80, required: true },
+      { id: "acc2", name: "Ugali", price: 60, required: true },
+      { id: "acc5", name: "Vegetables", price: 100, required: false }
+    ]
+  },
+  {
+    id: "3",
+    name: "Beef Stew",
+    basePrice: 520,
+    category: "Main Course",
+    accompaniments: [
+      { id: "acc1", name: "Rice", price: 80, required: true },
+      { id: "acc2", name: "Ugali", price: 60, required: true },
+      { id: "acc6", name: "Chapati", price: 40, required: false }
+    ]
+  },
+  {
+    id: "4",
+    name: "Soda",
+    basePrice: 80,
+    category: "Beverages",
+    accompaniments: []
+  }
+];
+
 export const SalesPanel = () => {
   const [currentSale, setCurrentSale] = useState<SaleItem[]>([]);
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
-  const [itemName, setItemName] = useState("");
-  const [itemBasePrice, setItemBasePrice] = useState("");
+  const [selectedMenuItem, setSelectedMenuItem] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
+  const [isAccompanimentDialogOpen, setIsAccompanimentDialogOpen] = useState(false);
+  const [pendingMenuItem, setPendingMenuItem] = useState<typeof mockMenuItems[0] | null>(null);
 
   const VAT_RATE = 0.16; // 16% VAT
 
@@ -56,25 +107,48 @@ export const SalesPanel = () => {
     return Math.round(basePrice + vatAmount); // Round to nearest shilling
   };
 
-  const addItemToSale = () => {
-    if (!itemName || !itemBasePrice) return;
+  const handleMenuItemSelect = () => {
+    if (!selectedMenuItem) return;
     
-    const basePrice = parseFloat(itemBasePrice);
-    const vatAmount = calculateVAT(basePrice);
-    const totalPrice = calculateTotalPrice(basePrice);
+    const menuItem = mockMenuItems.find(item => item.id === selectedMenuItem);
+    if (!menuItem) return;
+
+    // If the item has accompaniments, show the dialog
+    if (menuItem.accompaniments.length > 0) {
+      setPendingMenuItem(menuItem);
+      setIsAccompanimentDialogOpen(true);
+    } else {
+      // Add item directly without accompaniments
+      addItemToSale(menuItem, []);
+    }
+    
+    setSelectedMenuItem("");
+  };
+
+  const addItemToSale = (menuItem: typeof mockMenuItems[0], selectedAccompaniments: Accompaniment[]) => {
+    const accompanimentTotal = selectedAccompaniments.reduce((sum, acc) => sum + acc.price, 0);
+    const totalBasePrice = menuItem.basePrice + accompanimentTotal;
+    const vatAmount = calculateVAT(totalBasePrice);
+    const totalPrice = calculateTotalPrice(totalBasePrice);
     
     const newItem: SaleItem = {
       id: Date.now().toString(),
-      name: itemName,
-      basePrice,
+      name: menuItem.name,
+      basePrice: totalBasePrice,
       vatAmount,
       totalPrice,
-      quantity: 1
+      quantity: 1,
+      accompaniments: selectedAccompaniments
     };
 
     setCurrentSale([...currentSale, newItem]);
-    setItemName("");
-    setItemBasePrice("");
+  };
+
+  const handleAccompanimentConfirm = (selectedAccompaniments: Accompaniment[]) => {
+    if (pendingMenuItem) {
+      addItemToSale(pendingMenuItem, selectedAccompaniments);
+      setPendingMenuItem(null);
+    }
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -148,69 +222,74 @@ export const SalesPanel = () => {
         <Card>
           <CardHeader>
             <CardTitle>New Sale</CardTitle>
-            <CardDescription>Add items and process payment</CardDescription>
+            <CardDescription>Select menu items and process payment</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="itemName">Item Name</Label>
-                <Input
-                  id="itemName"
-                  value={itemName}
-                  onChange={(e) => setItemName(e.target.value)}
-                  placeholder="Enter item name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="itemBasePrice">Base Price (KSH)</Label>
-                <Input
-                  id="itemBasePrice"
-                  type="number"
-                  step="0.01"
-                  value={itemBasePrice}
-                  onChange={(e) => setItemBasePrice(e.target.value)}
-                  placeholder="0.00"
-                />
-                {itemBasePrice && (
-                  <div className="text-xs text-gray-600 mt-1">
-                    Total: KSH {calculateTotalPrice(parseFloat(itemBasePrice))} (incl. VAT)
-                  </div>
-                )}
+                <Label htmlFor="menuItem">Select Menu Item</Label>
+                <div className="flex gap-2">
+                  <Select value={selectedMenuItem} onValueChange={setSelectedMenuItem}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Choose a menu item" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockMenuItems.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name} - KSH {calculateTotalPrice(item.basePrice)} ({item.category})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleMenuItemSelect} disabled={!selectedMenuItem}>
+                    Add Item
+                  </Button>
+                </div>
               </div>
             </div>
-            <Button onClick={addItemToSale} className="w-full">
-              Add Item
-            </Button>
 
             {/* Current Sale Items */}
             {currentSale.length > 0 && (
               <div className="space-y-4">
                 <h4 className="font-medium">Current Sale Items:</h4>
                 {currentSale.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <div>
-                      <span className="font-medium">{item.name}</span>
-                      <div className="text-sm text-gray-600">
-                        Base: KSH {item.basePrice.toFixed(2)} • VAT: KSH {item.vatAmount.toFixed(2)} • Total: KSH {item.totalPrice}
+                  <div key={item.id} className="space-y-2 p-3 bg-gray-50 rounded">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <span className="font-medium">{item.name}</span>
+                        <div className="text-sm text-gray-600">
+                          Base: KSH {item.basePrice.toFixed(2)} • VAT: KSH {item.vatAmount.toFixed(2)} • Total: KSH {item.totalPrice}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, -1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateQuantity(item.id, -1)}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-8 text-center">{item.quantity}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateQuantity(item.id, 1)}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
+                    {item.accompaniments && item.accompaniments.length > 0 && (
+                      <div className="text-sm">
+                        <span className="text-gray-600">Accompaniments: </span>
+                        {item.accompaniments.map((acc, index) => (
+                          <span key={acc.id} className="text-blue-600">
+                            {acc.name} (+KSH {acc.price})
+                            {index < item.accompaniments!.length - 1 ? ", " : ""}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
                 
@@ -312,6 +391,19 @@ export const SalesPanel = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Accompaniment Selection Dialog */}
+      {pendingMenuItem && (
+        <AccompanimentDialog
+          isOpen={isAccompanimentDialogOpen}
+          onClose={() => {
+            setIsAccompanimentDialogOpen(false);
+            setPendingMenuItem(null);
+          }}
+          mainItem={pendingMenuItem}
+          onConfirm={handleAccompanimentConfirm}
+        />
+      )}
     </div>
   );
 };

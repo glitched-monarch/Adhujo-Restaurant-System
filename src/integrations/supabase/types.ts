@@ -115,74 +115,39 @@ export type Database = {
       }
       menu_items: {
         Row: {
+          availability: boolean | null
           category: string | null
+          created_at: string | null
+          description: string | null
           id: number
           name: string
           parameters: string | null
           price: number
+          updated_at: string | null
         }
         Insert: {
+          availability?: boolean | null
           category?: string | null
+          created_at?: string | null
+          description?: string | null
           id?: number
           name: string
           parameters?: string | null
           price: number
+          updated_at?: string | null
         }
         Update: {
+          availability?: boolean | null
           category?: string | null
+          created_at?: string | null
+          description?: string | null
           id?: number
           name?: string
           parameters?: string | null
           price?: number
+          updated_at?: string | null
         }
         Relationships: []
-      }
-      reports_expenses: {
-        Row: {
-          action_timestamp: string | null
-          category: string | null
-          entry_date: string
-          entry_type: string
-          id: number
-          notes: string | null
-          parameters: string | null
-          performed_by: number | null
-          report_type: string | null
-          total: number | null
-        }
-        Insert: {
-          action_timestamp?: string | null
-          category?: string | null
-          entry_date: string
-          entry_type: string
-          id?: number
-          notes?: string | null
-          parameters?: string | null
-          performed_by?: number | null
-          report_type?: string | null
-          total?: number | null
-        }
-        Update: {
-          action_timestamp?: string | null
-          category?: string | null
-          entry_date?: string
-          entry_type?: string
-          id?: number
-          notes?: string | null
-          parameters?: string | null
-          performed_by?: number | null
-          report_type?: string | null
-          total?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reports_expenses_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       sale_items: {
         Row: {
@@ -229,6 +194,48 @@ export type Database = {
           },
         ]
       }
+      sale_refunds: {
+        Row: {
+          id: number
+          original_sale_id: number | null
+          reason: string | null
+          refund_amount: number
+          refund_date: string | null
+          refunded_by: number | null
+        }
+        Insert: {
+          id?: number
+          original_sale_id?: number | null
+          reason?: string | null
+          refund_amount: number
+          refund_date?: string | null
+          refunded_by?: number | null
+        }
+        Update: {
+          id?: number
+          original_sale_id?: number | null
+          reason?: string | null
+          refund_amount?: number
+          refund_date?: string | null
+          refunded_by?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_refunds_original_sale_id_fkey"
+            columns: ["original_sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_refunds_refunded_by_fkey"
+            columns: ["refunded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           action_timestamp: string | null
@@ -242,6 +249,10 @@ export type Database = {
           payment_ref: string | null
           performed_by: number | null
           phone_number: number | null
+          status: string | null
+          subtotal: number | null
+          tax_amount: number | null
+          total_amount: number | null
         }
         Insert: {
           action_timestamp?: string | null
@@ -255,6 +266,10 @@ export type Database = {
           payment_ref?: string | null
           performed_by?: number | null
           phone_number?: number | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
         }
         Update: {
           action_timestamp?: string | null
@@ -268,6 +283,10 @@ export type Database = {
           payment_ref?: string | null
           performed_by?: number | null
           phone_number?: number | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
         }
         Relationships: [
           {
@@ -279,22 +298,55 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          description: string | null
+          id: number
+          setting_key: string
+          setting_value: string
+          updated_at: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: number
+          setting_key: string
+          setting_value: string
+          updated_at?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: number
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           id: number
+          id_number: string | null
+          NameOfUser: string | null
           password: string
+          phone_number: string | null
           role: string
           username: string
         }
         Insert: {
           id?: number
+          id_number?: string | null
+          NameOfUser?: string | null
           password: string
+          phone_number?: string | null
           role: string
           username: string
         }
         Update: {
           id?: number
+          id_number?: string | null
+          NameOfUser?: string | null
           password?: string
+          phone_number?: string | null
           role?: string
           username?: string
         }
