@@ -14,13 +14,21 @@ import { isWithinInterval } from "date-fns";
 interface SaleItem {
   id: string;
   name: string;
-  price: number;
+  basePrice: number;
+  vatAmount: number;
+  totalPrice: number;
   quantity: number;
+  accompaniments?: Array<{
+    name: string;
+    price: number;
+  }>;
 }
 
 interface Sale {
   id: string;
   items: SaleItem[];
+  subtotal: number;
+  vatTotal: number;
   total: number;
   paymentMethod: string;
   amountPaid: number;
@@ -32,24 +40,41 @@ export const SalesPanel = () => {
   const [currentSale, setCurrentSale] = useState<SaleItem[]>([]);
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [itemName, setItemName] = useState("");
-  const [itemPrice, setItemPrice] = useState("");
+  const [itemBasePrice, setItemBasePrice] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
 
+  const VAT_RATE = 0.16; // 16% VAT
+
+  const calculateVAT = (basePrice: number) => {
+    return basePrice * VAT_RATE;
+  };
+
+  const calculateTotalPrice = (basePrice: number) => {
+    const vatAmount = calculateVAT(basePrice);
+    return Math.round(basePrice + vatAmount); // Round to nearest shilling
+  };
+
   const addItemToSale = () => {
-    if (!itemName || !itemPrice) return;
+    if (!itemName || !itemBasePrice) return;
+    
+    const basePrice = parseFloat(itemBasePrice);
+    const vatAmount = calculateVAT(basePrice);
+    const totalPrice = calculateTotalPrice(basePrice);
     
     const newItem: SaleItem = {
       id: Date.now().toString(),
       name: itemName,
-      price: parseFloat(itemPrice),
+      basePrice,
+      vatAmount,
+      totalPrice,
       quantity: 1
     };
 
     setCurrentSale([...currentSale, newItem]);
     setItemName("");
-    setItemPrice("");
+    setItemBasePrice("");
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -63,13 +88,17 @@ export const SalesPanel = () => {
   const completeSale = () => {
     if (currentSale.length === 0) return;
 
-    const total = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = currentSale.reduce((sum, item) => sum + (item.basePrice * item.quantity), 0);
+    const vatTotal = currentSale.reduce((sum, item) => sum + (item.vatAmount * item.quantity), 0);
+    const total = Math.round(subtotal + vatTotal); // Round to nearest shilling
     const paidAmount = parseFloat(amountPaid) || total;
     const change = Math.max(0, paidAmount - total);
 
     const newSale: Sale = {
       id: Date.now().toString(),
       items: [...currentSale],
+      subtotal,
+      vatTotal,
       total,
       paymentMethod,
       amountPaid: paidAmount,
@@ -85,7 +114,9 @@ export const SalesPanel = () => {
     console.log("Sale completed:", newSale);
   };
 
-  const currentTotal = currentSale.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const currentSubtotal = currentSale.reduce((sum, item) => sum + (item.basePrice * item.quantity), 0);
+  const currentVATTotal = currentSale.reduce((sum, item) => sum + (item.vatAmount * item.quantity), 0);
+  const currentTotal = Math.round(currentSubtotal + currentVATTotal);
 
   const filteredSalesHistory = salesHistory.filter(sale => {
     if (!dateRange) return true;
@@ -131,15 +162,20 @@ export const SalesPanel = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="itemPrice">Price</Label>
+                <Label htmlFor="itemBasePrice">Base Price (KSH)</Label>
                 <Input
-                  id="itemPrice"
+                  id="itemBasePrice"
                   type="number"
                   step="0.01"
-                  value={itemPrice}
-                  onChange={(e) => setItemPrice(e.target.value)}
+                  value={itemBasePrice}
+                  onChange={(e) => setItemBasePrice(e.target.value)}
                   placeholder="0.00"
                 />
+                {itemBasePrice && (
+                  <div className="text-xs text-gray-600 mt-1">
+                    Total: KSH {calculateTotalPrice(parseFloat(itemBasePrice))} (incl. VAT)
+                  </div>
+                )}
               </div>
             </div>
             <Button onClick={addItemToSale} className="w-full">
@@ -152,7 +188,12 @@ export const SalesPanel = () => {
                 <h4 className="font-medium">Current Sale Items:</h4>
                 {currentSale.map((item) => (
                   <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span>{item.name} - ${item.price}</span>
+                    <div>
+                      <span className="font-medium">{item.name}</span>
+                      <div className="text-sm text-gray-600">
+                        Base: KSH {item.basePrice.toFixed(2)} • VAT: KSH {item.vatAmount.toFixed(2)} • Total: KSH {item.totalPrice}
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
@@ -173,8 +214,19 @@ export const SalesPanel = () => {
                   </div>
                 ))}
                 
-                <div className="text-right font-bold text-lg">
-                  Total: ${currentTotal.toFixed(2)}
+                <div className="border-t pt-4 space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span>KSH {currentSubtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>VAT (16%):</span>
+                    <span>KSH {currentVATTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total:</span>
+                    <span>KSH {currentTotal}</span>
+                  </div>
                 </div>
 
                 {/* Payment Section */}
@@ -196,18 +248,18 @@ export const SalesPanel = () => {
                   
                   {paymentMethod === "cash" && (
                     <div>
-                      <Label htmlFor="amountPaid">Amount Paid</Label>
+                      <Label htmlFor="amountPaid">Amount Paid (KSH)</Label>
                       <Input
                         id="amountPaid"
                         type="number"
-                        step="0.01"
+                        step="1"
                         value={amountPaid}
                         onChange={(e) => setAmountPaid(e.target.value)}
-                        placeholder={currentTotal.toFixed(2)}
+                        placeholder={currentTotal.toString()}
                       />
                       {amountPaid && parseFloat(amountPaid) > currentTotal && (
                         <p className="text-sm text-muted-foreground mt-1">
-                          Change: ${(parseFloat(amountPaid) - currentTotal).toFixed(2)}
+                          Change: KSH {Math.round(parseFloat(amountPaid) - currentTotal)}
                         </p>
                       )}
                     </div>
@@ -246,7 +298,7 @@ export const SalesPanel = () => {
                     <TableCell>{sale.timestamp.toLocaleTimeString()}</TableCell>
                     <TableCell>{sale.items.length} items</TableCell>
                     <TableCell>{getPaymentMethodBadge(sale.paymentMethod)}</TableCell>
-                    <TableCell>${sale.total.toFixed(2)}</TableCell>
+                    <TableCell>KSH {sale.total}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

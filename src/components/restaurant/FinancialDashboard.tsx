@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -129,7 +128,7 @@ export const FinancialDashboard = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Financial Dashboard</h2>
-        <p className="text-gray-600">TallyPrime-style comprehensive financial overview</p>
+        <p className="text-gray-600">Comprehensive financial overview and metrics</p>
       </div>
 
       <DateRangeFilter onDateRangeChange={setDateRange} />
@@ -142,7 +141,7 @@ export const FinancialDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${financialSummary.totalSales.toFixed(2)}</div>
+            <div className="text-2xl font-bold">KSH {financialSummary.totalSales.toFixed(0)}</div>
             <p className="text-xs text-muted-foreground">Revenue generated</p>
           </CardContent>
         </Card>
@@ -153,7 +152,7 @@ export const FinancialDashboard = () => {
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${financialSummary.totalExpenses.toFixed(2)}</div>
+            <div className="text-2xl font-bold">KSH {financialSummary.totalExpenses.toFixed(0)}</div>
             <p className="text-xs text-muted-foreground">Business expenses</p>
           </CardContent>
         </Card>
@@ -168,7 +167,7 @@ export const FinancialDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${financialSummary.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${financialSummary.grossProfit.toFixed(2)}
+              KSH {financialSummary.grossProfit.toFixed(0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {financialSummary.profitMargin.toFixed(1)}% margin
@@ -182,7 +181,7 @@ export const FinancialDashboard = () => {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${financialSummary.averageTransaction.toFixed(2)}</div>
+            <div className="text-2xl font-bold">KSH {financialSummary.averageTransaction.toFixed(0)}</div>
             <p className="text-xs text-muted-foreground">{financialSummary.transactionCount} transactions</p>
           </CardContent>
         </Card>
@@ -271,7 +270,7 @@ export const FinancialDashboard = () => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Amount']} />
+                    <Tooltip formatter={(value) => [`KSH ${Number(value).toFixed(0)}`, 'Amount']} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -297,7 +296,7 @@ export const FinancialDashboard = () => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Amount']} />
+                    <Tooltip formatter={(value) => [`KSH ${Number(value).toFixed(0)}`, 'Amount']} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -325,7 +324,7 @@ export const FinancialDashboard = () => {
                     {filteredData.sales.slice(0, 5).map((sale) => (
                       <TableRow key={sale.id}>
                         <TableCell>{format(sale.date, 'MMM dd')}</TableCell>
-                        <TableCell>${sale.amount.toFixed(2)}</TableCell>
+                        <TableCell>KSH {sale.amount.toFixed(0)}</TableCell>
                         <TableCell>
                           <Badge variant="secondary">{sale.paymentMethod}</Badge>
                         </TableCell>
@@ -355,7 +354,7 @@ export const FinancialDashboard = () => {
                     {filteredData.expenses.slice(0, 5).map((expense) => (
                       <TableRow key={expense.id}>
                         <TableCell>{format(expense.date, 'MMM dd')}</TableCell>
-                        <TableCell>${expense.amount.toFixed(2)}</TableCell>
+                        <TableCell>KSH {expense.amount.toFixed(0)}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{expense.category}</Badge>
                         </TableCell>
@@ -421,7 +420,7 @@ export const FinancialDashboard = () => {
                       <TableCell>{transaction.description}</TableCell>
                       <TableCell>{transaction.category}</TableCell>
                       <TableCell className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        ${Math.abs(transaction.amount).toFixed(2)}
+                        KSH {Math.abs(transaction.amount).toFixed(0)}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{transaction.status}</Badge>
