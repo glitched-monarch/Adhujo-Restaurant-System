@@ -5,35 +5,16 @@ import { DateRange } from "@/components/common/DateRangeFilter";
 import { SalesForm } from "./sales/SalesForm";
 import { CurrentSale } from "./sales/CurrentSale";
 import { SalesHistory } from "./sales/SalesHistory";
-
-interface Accompaniment {
-  id: string;
-  name: string;
-  price: number;
-  required: boolean;
-}
-
-interface SaleItem {
-  id: string;
-  name: string;
-  basePrice: number;
-  vatAmount: number;
-  totalPrice: number;
-  quantity: number;
-  accompaniments?: Accompaniment[];
-}
-
-interface Sale {
-  id: string;
-  items: SaleItem[];
-  subtotal: number;
-  vatTotal: number;
-  total: number;
-  paymentMethod: string;
-  amountPaid: number;
-  change: number;
-  timestamp: Date;
-}
+import { useSales } from "@/hooks/useSales";
+import { Sale, SaleItem, Accompaniment } from "@/services/database";
+import { 
+  calculateVAT, 
+  calculateTotalPrice, 
+  calculateSaleSubtotal, 
+  calculateSaleVATTotal, 
+  calculateSaleTotal,
+  calculateChange 
+} from "@/utils/calculations";
 
 // Mock menu items with accompaniments
 const mockMenuItems = [
@@ -81,22 +62,11 @@ const mockMenuItems = [
 ];
 
 export const SalesPanel = () => {
+  const { sales, loading, error, addSale } = useSales();
   const [currentSale, setCurrentSale] = useState<SaleItem[]>([]);
-  const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
-
-  const VAT_RATE = 0.16; // 16% VAT
-
-  const calculateVAT = (basePrice: number) => {
-    return basePrice * VAT_RATE;
-  };
-
-  const calculateTotalPrice = (basePrice: number) => {
-    const vatAmount = calculateVAT(basePrice);
-    return Math.round(basePrice + vatAmount); // Round to nearest shilling
-  };
 
   const addItemToSale = (menuItem: typeof mockMenuItems[0], selectedAccompaniments: Accompaniment[]) => {
     const accompanimentTotal = selectedAccompaniments.reduce((sum, acc) => sum + acc.price, 0);
@@ -125,17 +95,16 @@ export const SalesPanel = () => {
     ).filter(item => item.quantity > 0));
   };
 
-  const completeSale = () => {
+  const completeSale = async () => {
     if (currentSale.length === 0) return;
 
-    const subtotal = currentSale.reduce((sum, item) => sum + (item.basePrice * item.quantity), 0);
-    const vatTotal = currentSale.reduce((sum, item) => sum + (item.vatAmount * item.quantity), 0);
-    const total = Math.round(subtotal + vatTotal); // Round to nearest shilling
+    const subtotal = calculateSaleSubtotal(currentSale);
+    const vatTotal = calculateSaleVATTotal(currentSale);
+    const total = calculateSaleTotal(subtotal, vatTotal);
     const paidAmount = parseFloat(amountPaid) || total;
-    const change = Math.max(0, paidAmount - total);
+    const change = calculateChange(paidAmount, total);
 
-    const newSale: Sale = {
-      id: Date.now().toString(),
+    const newSale: Omit<Sale, 'id'> = {
       items: [...currentSale],
       subtotal,
       vatTotal,
@@ -146,18 +115,29 @@ export const SalesPanel = () => {
       timestamp: new Date()
     };
 
-    setSalesHistory([newSale, ...salesHistory]);
-    setCurrentSale([]);
-    setAmountPaid("");
-    setPaymentMethod("cash");
-    
-    console.log("Sale completed:", newSale);
+    try {
+      await addSale(newSale);
+      setCurrentSale([]);
+      setAmountPaid("");
+      setPaymentMethod("cash");
+      console.log("Sale completed successfully");
+    } catch (error) {
+      console.error("Failed to complete sale:", error);
+    }
   };
 
-  const filteredSalesHistory = salesHistory.filter(sale => {
+  const filteredSalesHistory = sales.filter(sale => {
     if (!dateRange) return true;
     return isWithinInterval(sale.timestamp, { start: dateRange.from, end: dateRange.to });
   });
+
+  if (loading) {
+    return <div>Loading sales data...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading sales: {error}</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -186,7 +166,7 @@ export const SalesPanel = () => {
         </div>
 
         <SalesHistory
-          salesHistory={salesHistory}
+          salesHistory={sales}
           filteredSalesHistory={filteredSalesHistory}
           onDateRangeChange={setDateRange}
         />

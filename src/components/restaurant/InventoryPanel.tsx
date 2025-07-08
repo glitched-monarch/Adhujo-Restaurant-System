@@ -7,26 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Minus, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  minStock: number;
-  cost: number;
-  expiryDate?: Date;
-}
+import { useInventory } from "@/hooks/useInventory";
+import { getExpiryStatus, isLowStock, calculateInventoryValue } from "@/utils/calculations";
 
 export const InventoryPanel = () => {
-  const [inventory, setInventory] = useState<InventoryItem[]>([
-    { id: "1", name: "Flour", quantity: 50, unit: "kg", minStock: 10, cost: 2.5, expiryDate: new Date("2024-02-15") },
-    { id: "2", name: "Tomatoes", quantity: 25, unit: "kg", minStock: 5, cost: 3.0, expiryDate: new Date("2024-01-08") },
-    { id: "3", name: "Cheese", quantity: 15, unit: "kg", minStock: 3, cost: 8.0, expiryDate: new Date("2024-01-12") },
-    { id: "4", name: "Chicken", quantity: 8, unit: "kg", minStock: 5, cost: 12.0, expiryDate: new Date("2024-01-07") },
-    { id: "5", name: "Lettuce", quantity: 2, unit: "kg", minStock: 3, cost: 2.0, expiryDate: new Date("2024-01-06") },
-  ]);
-
+  const { inventory, loading, error, addInventoryItem, updateQuantity } = useInventory();
+  
   const [newItem, setNewItem] = useState({
     name: "",
     quantity: "",
@@ -36,45 +22,41 @@ export const InventoryPanel = () => {
     expiryDate: ""
   });
 
-  const addInventoryItem = () => {
+  const handleAddInventoryItem = async () => {
     if (!newItem.name || !newItem.quantity || !newItem.unit) return;
 
-    const item: InventoryItem = {
-      id: Date.now().toString(),
-      name: newItem.name,
-      quantity: parseFloat(newItem.quantity),
-      unit: newItem.unit,
-      minStock: parseFloat(newItem.minStock) || 0,
-      cost: parseFloat(newItem.cost) || 0,
-      expiryDate: newItem.expiryDate ? new Date(newItem.expiryDate) : undefined
-    };
-
-    setInventory([...inventory, item]);
-    setNewItem({ name: "", quantity: "", unit: "", minStock: "", cost: "", expiryDate: "" });
+    try {
+      await addInventoryItem({
+        name: newItem.name,
+        quantity: parseFloat(newItem.quantity),
+        unit: newItem.unit,
+        minStock: parseFloat(newItem.minStock) || 0,
+        cost: parseFloat(newItem.cost) || 0,
+        expiryDate: newItem.expiryDate ? new Date(newItem.expiryDate) : undefined
+      });
+      setNewItem({ name: "", quantity: "", unit: "", minStock: "", cost: "", expiryDate: "" });
+    } catch (error) {
+      console.error('Failed to add inventory item:', error);
+    }
   };
 
-  const updateQuantity = (id: string, delta: number) => {
-    setInventory(inventory.map(item =>
-      item.id === id
-        ? { ...item, quantity: Math.max(0, item.quantity + delta) }
-        : item
-    ));
+  const handleUpdateQuantity = async (id: string, delta: number) => {
+    try {
+      await updateQuantity(id, delta);
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+    }
   };
 
-  const lowStockItems = inventory.filter(item => item.quantity <= item.minStock);
-  
-  const getExpiryStatus = (expiryDate?: Date) => {
-    if (!expiryDate) return null;
-    
-    const today = new Date();
-    const timeDiff = expiryDate.getTime() - today.getTime();
-    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    
-    if (daysDiff < 0) return "expired";
-    if (daysDiff <= 3) return "expiring-soon";
-    if (daysDiff <= 7) return "expiring-week";
-    return "fresh";
-  };
+  if (loading) {
+    return <div>Loading inventory...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading inventory: {error}</div>;
+  }
+
+  const lowStockItems = inventory.filter(item => isLowStock(item.quantity, item.minStock));
 
   const getExpiryBadge = (expiryDate?: Date) => {
     if (!expiryDate) return null;
@@ -216,7 +198,7 @@ export const InventoryPanel = () => {
                 onChange={(e) => setNewItem({ ...newItem, expiryDate: e.target.value })}
               />
             </div>
-            <Button onClick={addInventoryItem} className="w-full">
+            <Button onClick={handleAddInventoryItem} className="w-full">
               Add Item
             </Button>
           </CardContent>
@@ -235,7 +217,7 @@ export const InventoryPanel = () => {
                 <div>Low Stock Items: {lowStockItems.length}</div>
                 <div>Expired Items: {expiredItems.length}</div>
                 <div>Expiring Soon: {expiringSoonItems.length}</div>
-                <div className="col-span-2">Total Value: ${inventory.reduce((sum, item) => sum + (item.quantity * item.cost), 0).toFixed(2)}</div>
+                <div className="col-span-2">Total Value: ${calculateInventoryValue(inventory).toFixed(2)}</div>
               </div>
             </div>
           </CardContent>
@@ -262,16 +244,16 @@ export const InventoryPanel = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inventory.map((item) => {
-                const isLowStock = item.quantity <= item.minStock;
-                const expiryStatus = getExpiryStatus(item.expiryDate);
-                const isExpired = expiryStatus === "expired";
-                const isExpiringSoon = expiryStatus === "expiring-soon";
+               {inventory.map((item) => {
+                 const itemLowStock = isLowStock(item.quantity, item.minStock);
+                 const expiryStatus = getExpiryStatus(item.expiryDate);
+                 const isExpired = expiryStatus === "expired";
+                 const isExpiringSoon = expiryStatus === "expiring-soon";
                 
                 return (
                   <TableRow 
                     key={item.id} 
-                    className={`${isLowStock ? "bg-yellow-50" : ""} ${isExpired ? "bg-red-50" : ""} ${isExpiringSoon ? "bg-orange-50" : ""}`}
+                    className={`${itemLowStock ? "bg-yellow-50" : ""} ${isExpired ? "bg-red-50" : ""} ${isExpiringSoon ? "bg-orange-50" : ""}`}
                   >
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
@@ -282,20 +264,20 @@ export const InventoryPanel = () => {
                     <TableCell>{getExpiryBadge(item.expiryDate)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateQuantity(item.id, -1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateQuantity(item.id, 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleUpdateQuantity(item.id, -1)}
+                         >
+                           <Minus className="h-3 w-3" />
+                         </Button>
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleUpdateQuantity(item.id, 1)}
+                         >
+                           <Plus className="h-3 w-3" />
+                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
