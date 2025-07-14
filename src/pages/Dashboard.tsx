@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { SalesPanel } from "@/components/restaurant/SalesPanel";
 import { InventoryPanel } from "@/components/restaurant/InventoryPanel";
 import { ReportsPanel } from "@/components/restaurant/ReportsPanel";
+import { ReportsOverview } from "@/components/restaurant/reports/ReportsOverview";
 import { EnhancedReportsPanel } from "@/components/restaurant/EnhancedReportsPanel";
 import { FinancialDashboard } from "@/components/restaurant/FinancialDashboard";
 import { UsersPanel } from "@/components/restaurant/UsersPanel";
