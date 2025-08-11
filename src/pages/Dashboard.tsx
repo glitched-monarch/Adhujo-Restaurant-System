@@ -5,10 +5,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { SalesPanel } from "@/components/restaurant/SalesPanel";
 import { InventoryPanel } from "@/components/restaurant/InventoryPanel";
-import { ReportsPanel } from "@/components/restaurant/ReportsPanel";
-import { ReportsOverview } from "@/components/restaurant/reports/ReportsOverview";
-import { EnhancedReportsPanel } from "@/components/restaurant/EnhancedReportsPanel";
-import { FinancialDashboard } from "@/components/restaurant/FinancialDashboard";
+import { UnifiedReportsPanel } from "@/components/restaurant/UnifiedReportsPanel";
 import { UsersPanel } from "@/components/restaurant/UsersPanel";
 import { ExpensePanel } from "@/components/restaurant/ExpensePanel";
 import { MenuManagementPanel } from "@/components/restaurant/MenuManagementPanel";
@@ -30,7 +27,6 @@ const Dashboard = () => {
   const canAccessReports = userRole === "admin" || userRole === "manager";
   const canAccessMenu = userRole === "admin" || userRole === "manager";
   const canAccessSettings = userRole === "admin";
-  const canAccessFinancials = userRole === "admin" || userRole === "manager";
 
   const renderActivePanel = () => {
     switch (activeTab) {
@@ -43,9 +39,7 @@ const Dashboard = () => {
       case 'expenses':
         return canAccessExpenses ? <ExpensePanel /> : <div>Access Denied</div>;
       case 'reports':
-        return canAccessReports ? <EnhancedReportsPanel /> : <div>Access Denied</div>;
-      case 'financial':
-        return canAccessFinancials ? <FinancialDashboard /> : <div>Access Denied</div>;
+        return canAccessReports ? <UnifiedReportsPanel /> : <div>Access Denied</div>;
       case 'users':
         return canAccessUsers ? <UsersPanel /> : <div>Access Denied</div>;
       case 'logs':
@@ -63,8 +57,7 @@ const Dashboard = () => {
       case 'inventory': return 'Inventory Management';
       case 'menu': return 'Menu Management';
       case 'expenses': return 'Expense Management';
-      case 'reports': return 'Advanced Reports';
-      case 'financial': return 'Financial Dashboard';
+      case 'reports': return 'Reports & Financials';
       case 'users': return 'User Management';
       case 'logs': return 'Access Logs';
       case 'settings': return 'System Settings';

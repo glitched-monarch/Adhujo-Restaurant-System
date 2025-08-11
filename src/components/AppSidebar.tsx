@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -23,7 +24,6 @@ import {
   Settings, 
   LogOut,
   ChefHat,
-  Calculator,
   TrendingUp,
   ShieldCheck
 } from "lucide-react";
@@ -74,17 +74,10 @@ export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
       access: ['admin', 'manager'] 
     },
     { 
-      id: 'financial', 
-      label: 'Financial', 
-      icon: Calculator, 
-      description: 'Financial dashboard and KPIs',
-      access: ['admin', 'manager'] 
-    },
-    { 
       id: 'reports', 
-      label: 'Reports', 
+      label: 'Reports & Financials', 
       icon: BarChart3, 
-      description: 'Advanced business reports',
+      description: 'Business analytics and financial insights',
       access: ['admin', 'manager'] 
     }
   ];
