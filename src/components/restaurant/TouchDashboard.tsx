@@ -233,10 +233,10 @@ export const TouchDashboard = ({ userRole }: TouchDashboardProps) => {
                   </div>
                 </div>
               </CardContent>
-            </div>
+            </Card>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
