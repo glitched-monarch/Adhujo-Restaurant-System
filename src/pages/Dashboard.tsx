@@ -4,12 +4,12 @@ import { useSearchParams } from "react-router-dom";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TouchDashboard } from "@/components/restaurant/TouchDashboard";
-import { SalesPanel } from "@/components/restaurant/SalesPanel";
-import { InventoryPanel } from "@/components/restaurant/InventoryPanel";
+import { ModernSalesPanel } from "@/components/restaurant/ModernSalesPanel";
+import { ModernInventoryPanel } from "@/components/restaurant/ModernInventoryPanel";
+import { ModernMenuPanel } from "@/components/restaurant/ModernMenuPanel";
+import { ModernExpensePanel } from "@/components/restaurant/ModernExpensePanel";
 import { UnifiedReportsPanel } from "@/components/restaurant/UnifiedReportsPanel";
 import { UsersPanel } from "@/components/restaurant/UsersPanel";
-import { ExpensePanel } from "@/components/restaurant/ExpensePanel";
-import { MenuManagementPanel } from "@/components/restaurant/MenuManagementPanel";
 import { AccessLogsPanel } from "@/components/restaurant/AccessLogsPanel";
 import { SystemSettingsPanel } from "@/components/restaurant/SystemSettingsPanel";
 
@@ -37,13 +37,13 @@ const Dashboard = () => {
   const renderActivePanel = () => {
     switch (activeTab) {
       case 'sales':
-        return <SalesPanel />;
+        return <ModernSalesPanel />;
       case 'inventory':
-        return <InventoryPanel />;
+        return <ModernInventoryPanel />;
       case 'menu':
-        return canAccessMenu ? <MenuManagementPanel /> : <div>Access Denied</div>;
+        return canAccessMenu ? <ModernMenuPanel /> : <div>Access Denied</div>;
       case 'expenses':
-        return canAccessExpenses ? <ExpensePanel /> : <div>Access Denied</div>;
+        return canAccessExpenses ? <ModernExpensePanel /> : <div>Access Denied</div>;
       case 'reports':
         return canAccessReports ? <UnifiedReportsPanel /> : <div>Access Denied</div>;
       case 'users':
@@ -57,12 +57,15 @@ const Dashboard = () => {
     }
   };
 
+  // For modern panels, render them directly without sidebar
+  const modernPanels = ['sales', 'inventory', 'menu', 'expenses'];
+  if (modernPanels.includes(activeTab || '')) {
+    return renderActivePanel();
+  }
+
+  // For other panels, use the sidebar layout
   const getPageTitle = () => {
     switch (activeTab) {
-      case 'sales': return 'Sales Management';
-      case 'inventory': return 'Inventory Management';
-      case 'menu': return 'Menu Management';
-      case 'expenses': return 'Expense Management';
       case 'reports': return 'Reports & Financials';
       case 'users': return 'User Management';
       case 'logs': return 'Access Logs';
