@@ -1,17 +1,18 @@
-
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Filter, Search, Star, Eye, Utensils, DollarSign, Edit, Trash2, EyeIcon } from "lucide-react";
+import { ArrowLeft, Plus, Filter, Search, ChefHat, Clock, Star, DollarSign, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { NewMenuForm } from "./forms/NewMenuForm";
 
 export const ModernMenuPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("items");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showNewItemForm, setShowNewItemForm] = useState(false);
   const { toast } = useToast();
 
   const handleBack = () => {
@@ -19,17 +20,12 @@ export const ModernMenuPanel = () => {
   };
 
   const handleAddItem = () => {
-    toast({
-      title: "Add Menu Item",
-      description: "Opening add menu item form...",
-    });
+    setShowNewItemForm(true);
   };
 
-  const handleViewItem = (itemName: string) => {
-    toast({
-      title: "View Item",
-      description: `Viewing details for ${itemName}...`,
-    });
+  const handleNewItemSubmit = (itemData: any) => {
+    console.log("New menu item:", itemData);
+    setShowNewItemForm(false);
   };
 
   const handleEditItem = (itemName: string) => {
@@ -53,80 +49,90 @@ export const ModernMenuPanel = () => {
     });
   };
 
+  if (showNewItemForm) {
+    return (
+      <NewMenuForm 
+        onBack={() => setShowNewItemForm(false)}
+        onSubmit={handleNewItemSubmit}
+      />
+    );
+  }
+
   const stats = [
     {
       title: "Total Items",
-      value: "45",
-      icon: Star,
-      color: "bg-purple-100 text-purple-600"
+      value: "127",
+      icon: ChefHat,
+      color: "bg-orange-100 text-orange-600"
     },
     {
       title: "Active Items",
-      value: "42",
-      icon: Eye,
+      value: "115",
+      icon: Star,
       color: "bg-green-100 text-green-600"
     },
     {
-      title: "Categories",
-      value: "8",
-      icon: Utensils,
+      title: "Avg. Prep Time",
+      value: "18 min",
+      icon: Clock,
       color: "bg-blue-100 text-blue-600"
     },
     {
-      title: "Avg Price",
-      value: "$18.75",
+      title: "Avg. Price",
+      value: "$24.50",
       icon: DollarSign,
-      color: "bg-orange-100 text-orange-600"
+      color: "bg-purple-100 text-purple-600"
     }
   ];
 
-  const categories = [
-    { id: "all", label: "All (45)", active: true },
-    { id: "pizza", label: "Pizza (12)" },
-    { id: "seafood", label: "Seafood (8)" },
-    { id: "salads", label: "Salads (6)" },
-    { id: "beverages", label: "Beverages (15)" },
-    { id: "desserts", label: "Desserts (4)" }
+  const tabs = [
+    { id: "items", label: "Menu Items" },
+    { id: "categories", label: "Categories" },
+    { id: "pricing", label: "Pricing" },
+    { id: "analytics", label: "Analytics" }
   ];
 
   const menuItems = [
     {
-      name: "Classic Margherita Pizza",
-      description: "Fresh mozzarella, tomato sauce, basil",
-      price: "$18.99",
-      category: "Pizza",
-      cookTime: "15 min",
-      calories: "850 cal",
-      cost: "$7.50",
-      margin: "61% margin",
-      popular: true,
-      image: "🍕"
-    },
-    {
       name: "Grilled Salmon",
-      description: "Atlantic salmon with lemon herb seasoning",
-      price: "$24.99",
-      category: "Seafood",
-      cookTime: "20 min",
-      calories: "420 cal",
-      cost: "$12",
-      margin: "52% margin",
-      popular: true,
-      image: "🐟"
+      category: "Main Course",
+      price: "$28.99",
+      prepTime: "25 min",
+      status: "active",
+      orders: 45,
+      rating: 4.8,
+      description: "Fresh Atlantic salmon with herbs and lemon"
     },
     {
       name: "Caesar Salad",
-      description: "Crisp romaine lettuce with caesar dressing",
+      category: "Appetizer",
       price: "$12.99",
-      category: "Salads",
-      cookTime: "10 min",
-      calories: "320 cal",
-      cost: "$4.50",
-      margin: "65% margin",
-      popular: false,
-      image: "🥗"
+      prepTime: "10 min",
+      status: "active",
+      orders: 32,
+      rating: 4.5,
+      description: "Crisp romaine lettuce with parmesan and croutons"
+    },
+    {
+      name: "Chocolate Cake",
+      category: "Dessert",
+      price: "$8.99",
+      prepTime: "5 min",
+      status: "unavailable",
+      orders: 28,
+      rating: 4.9,
+      description: "Rich chocolate cake with vanilla ice cream"
     }
   ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active": return "bg-green-100 text-green-800";
+      case "unavailable": return "bg-red-100 text-red-800";
+      case "seasonal": return "bg-yellow-100 text-yellow-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -144,7 +150,7 @@ export const ModernMenuPanel = () => {
             </Button>
             <h1 className="text-xl font-semibold text-gray-900">Menu Management</h1>
           </div>
-          <Button onClick={handleAddItem} className="bg-purple-600 hover:bg-purple-700">
+          <Button onClick={handleAddItem} className="bg-orange-600 hover:bg-orange-700">
             <Plus className="h-4 w-4 mr-2" />
             Add Item
           </Button>
@@ -171,21 +177,21 @@ export const ModernMenuPanel = () => {
           ))}
         </div>
 
-        {/* Category Tabs */}
+        {/* Tabs */}
         <div className="bg-white rounded-lg border">
           <div className="border-b">
-            <nav className="flex space-x-2 px-6 py-4 overflow-x-auto">
-              {categories.map((category) => (
+            <nav className="flex space-x-8 px-6">
+              {tabs.map((tab) => (
                 <button
-                  key={category.id}
-                  onClick={() => setActiveTab(category.id)}
-                  className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap ${
-                    activeTab === category.id
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === tab.id
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  {category.label}
+                  {tab.label}
                 </button>
               ))}
             </nav>
@@ -210,71 +216,57 @@ export const ModernMenuPanel = () => {
             </div>
           </div>
 
-          {/* Menu Items */}
+          {/* Content */}
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
               {menuItems.map((item, index) => (
-                <Card key={index} className="bg-white hover:shadow-md transition-shadow">
-                  <CardContent className="p-0">
-                    {item.popular && (
-                      <Badge className="absolute top-4 left-4 z-10 bg-orange-500 text-white">
-                        ⭐ Popular
+                <div key={index} className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+                      <p className="text-sm text-gray-600">{item.category}</p>
+                      <p className="text-sm text-gray-500 mt-1">{item.description}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge className={getStatusColor(item.status)}>
+                        {item.status}
                       </Badge>
-                    )}
-                    
-                    {/* Image placeholder */}
-                    <div className="h-48 bg-gray-200 rounded-t-lg flex items-center justify-center text-4xl">
-                      {item.image}
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEditItem(item.name)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDeleteItem(item.name)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    
-                    <div className="p-6">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                        <p className="text-lg font-bold text-gray-900">{item.price}</p>
-                      </div>
-                      
-                      <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                      
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-                        <span className="flex items-center gap-1">
-                          ⏱️ {item.cookTime}
-                        </span>
-                        <span>{item.calories}</span>
-                        <Badge variant="secondary">{item.category}</Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <div>
-                          <span className="text-gray-600">Cost: {item.cost}</span>
-                          <span className="text-green-600 ml-2">{item.margin}</span>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleViewItem(item.name)}
-                          >
-                            <EyeIcon className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleEditItem(item.name)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleDeleteItem(item.name)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Price</p>
+                      <p className="text-xl font-bold text-gray-900">{item.price}</p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Prep Time</p>
+                      <p className="text-xl font-bold text-gray-900">{item.prepTime}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Orders Today</p>
+                      <p className="text-xl font-bold text-gray-900">{item.orders}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Rating</p>
+                      <p className="text-xl font-bold text-gray-900">{item.rating}/5</p>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>

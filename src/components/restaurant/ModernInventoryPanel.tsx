@@ -7,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { NewInventoryForm } from "./forms/NewInventoryForm";
 
 export const ModernInventoryPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("items");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showNewItemForm, setShowNewItemForm] = useState(false);
   const { toast } = useToast();
 
   const handleBack = () => {
@@ -19,10 +21,12 @@ export const ModernInventoryPanel = () => {
   };
 
   const handleAddItem = () => {
-    toast({
-      title: "Add Item",
-      description: "Opening add item form...",
-    });
+    setShowNewItemForm(true);
+  };
+
+  const handleNewItemSubmit = (itemData: any) => {
+    console.log("New inventory item:", itemData);
+    setShowNewItemForm(false);
   };
 
   const handleEditItem = (itemName: string) => {
@@ -45,6 +49,15 @@ export const ModernInventoryPanel = () => {
       description: "Opening filter options...",
     });
   };
+
+  if (showNewItemForm) {
+    return (
+      <NewInventoryForm 
+        onBack={() => setShowNewItemForm(false)}
+        onSubmit={handleNewItemSubmit}
+      />
+    );
+  }
 
   const stats = [
     {

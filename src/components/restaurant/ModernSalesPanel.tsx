@@ -1,41 +1,31 @@
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Filter, Search, ShoppingCart, Receipt, Clock, DollarSign, Check, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Plus, Filter, Search, DollarSign, ShoppingCart, TrendingUp, Clock } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { NewSaleForm } from "./forms/NewSaleForm";
 
 export const ModernSalesPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activePeriod, setActivePeriod] = useState("today");
+  const [activeTab, setActiveTab] = useState("transactions");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showNewSaleForm, setShowNewSaleForm] = useState(false);
   const { toast } = useToast();
 
   const handleBack = () => {
     setSearchParams({});
   };
 
-  const handleNewOrder = () => {
-    toast({
-      title: "New Order",
-      description: "Opening new order form...",
-    });
+  const handleAddSale = () => {
+    setShowNewSaleForm(true);
   };
 
-  const handleCompleteOrder = (orderId: string) => {
-    toast({
-      title: "Order Completed",
-      description: `Order ${orderId} has been marked as completed.`,
-    });
-  };
-
-  const handleCancelOrder = (orderId: string) => {
-    toast({
-      title: "Order Cancelled",
-      description: `Order ${orderId} has been cancelled.`,
-    });
+  const handleNewSaleSubmit = (saleData: any) => {
+    console.log("New sale:", saleData);
+    setShowNewSaleForm(false);
   };
 
   const handleFilter = () => {
@@ -45,77 +35,58 @@ export const ModernSalesPanel = () => {
     });
   };
 
+  if (showNewSaleForm) {
+    return (
+      <NewSaleForm 
+        onBack={() => setShowNewSaleForm(false)}
+        onSubmit={handleNewSaleSubmit}
+      />
+    );
+  }
+
   const stats = [
     {
-      title: "Today's Revenue",
-      value: "$4,750",
+      title: "Today's Sales",
+      value: "$2,450",
+      change: "+12.5% from yesterday",
       icon: DollarSign,
       color: "bg-green-100 text-green-600"
     },
     {
-      title: "Total Orders",
-      value: "142",
+      title: "Transactions",
+      value: "48",
+      change: "+8 from yesterday",
       icon: ShoppingCart,
       color: "bg-blue-100 text-blue-600"
     },
     {
-      title: "Pending Orders",
-      value: "7",
-      icon: Clock,
-      color: "bg-yellow-100 text-yellow-600"
+      title: "Average Order",
+      value: "$51.04",
+      change: "+4.2% from yesterday",
+      icon: TrendingUp,
+      color: "bg-purple-100 text-purple-600"
     },
     {
-      title: "Avg Order Value",
-      value: "$33.45",
-      icon: Receipt,
-      color: "bg-purple-100 text-purple-600"
+      title: "Peak Hour",
+      value: "2:00 PM",
+      icon: Clock,
+      color: "bg-orange-100 text-orange-600"
     }
+  ];
+
+  const periods = [
+    { id: "today", label: "Today" },
+    { id: "week", label: "This Week" },
+    { id: "month", label: "This Month" },
+    { id: "year", label: "This Year" }
   ];
 
   const tabs = [
-    { id: "orders", label: "Orders" },
     { id: "transactions", label: "Transactions" },
-    { id: "tables", label: "Tables" }
+    { id: "customers", label: "Customers" },
+    { id: "products", label: "Products" },
+    { id: "payments", label: "Payments" }
   ];
-
-  const orders = [
-    {
-      id: "ORD-001",
-      table: "Table 5",
-      customer: "John Doe",
-      amount: "$45.99",
-      items: "3 items",
-      status: "pending",
-      time: "2 mins ago"
-    },
-    {
-      id: "ORD-002",
-      table: "Table 2",
-      customer: "Jane Smith",
-      amount: "$32.50",
-      items: "2 items",
-      status: "completed",
-      time: "15 mins ago"
-    },
-    {
-      id: "ORD-003",
-      table: "Counter",
-      customer: "Mike Johnson",
-      amount: "$12.99",
-      items: "1 items",
-      status: "preparing",
-      time: "5 mins ago"
-    }
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      case "completed": return "bg-green-100 text-green-800";
-      case "preparing": return "bg-blue-100 text-blue-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -133,14 +104,31 @@ export const ModernSalesPanel = () => {
             </Button>
             <h1 className="text-xl font-semibold text-gray-900">Sales Management</h1>
           </div>
-          <Button onClick={handleNewOrder} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={handleAddSale} className="bg-green-600 hover:bg-green-700">
             <Plus className="h-4 w-4 mr-2" />
-            New Order
+            New Sale
           </Button>
         </div>
       </div>
 
       <div className="p-6 space-y-6">
+        {/* Period Tabs */}
+        <div className="flex gap-2">
+          {periods.map((period) => (
+            <button
+              key={period.id}
+              onClick={() => setActivePeriod(period.id)}
+              className={`px-4 py-2 rounded-lg font-medium text-sm ${
+                activePeriod === period.id
+                  ? "bg-gray-900 text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border"
+              }`}
+            >
+              {period.label}
+            </button>
+          ))}
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, index) => (
@@ -150,6 +138,9 @@ export const ModernSalesPanel = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                     <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    {stat.change && (
+                      <p className="text-xs text-green-600 mt-1">{stat.change}</p>
+                    )}
                   </div>
                   <div className={`p-3 rounded-full ${stat.color}`}>
                     <stat.icon className="h-6 w-6" />
@@ -186,7 +177,7 @@ export const ModernSalesPanel = () => {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search orders, customers, or table numbers..."
+                  placeholder="Search transactions..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -199,46 +190,8 @@ export const ModernSalesPanel = () => {
             </div>
           </div>
 
-          {/* Content */}
           <div className="p-6">
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-medium text-gray-900">{order.id}</h3>
-                      <Badge className={getStatusColor(order.status)}>
-                        {order.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600">{order.table} • {order.customer}</p>
-                    <p className="text-xs text-gray-500">{order.time}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">{order.amount}</p>
-                    <p className="text-sm text-gray-600">{order.items}</p>
-                    <div className="flex gap-2 mt-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs"
-                        onClick={() => handleCompleteOrder(order.id)}
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs"
-                        onClick={() => handleCancelOrder(order.id)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-gray-500">Sales data will be displayed here based on the selected tab and period.</p>
           </div>
         </div>
       </div>
