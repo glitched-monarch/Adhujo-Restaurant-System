@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { TouchDashboard } from "@/components/restaurant/TouchDashboard";
 import { SalesPanel } from "@/components/restaurant/SalesPanel";
 import { InventoryPanel } from "@/components/restaurant/InventoryPanel";
 import { UnifiedReportsPanel } from "@/components/restaurant/UnifiedReportsPanel";
@@ -16,7 +17,7 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [userRole, setUserRole] = useState<"admin" | "manager" | "staff">("admin"); // Mock user role
   
-  const activeTab = searchParams.get('tab') || 'sales';
+  const activeTab = searchParams.get('tab');
 
   const handleLogout = () => {
     window.location.href = "/login";
@@ -27,6 +28,11 @@ const Dashboard = () => {
   const canAccessReports = userRole === "admin" || userRole === "manager";
   const canAccessMenu = userRole === "admin" || userRole === "manager";
   const canAccessSettings = userRole === "admin";
+
+  // Show touch dashboard if no specific tab is selected
+  if (!activeTab) {
+    return <TouchDashboard userRole={userRole} />;
+  }
 
   const renderActivePanel = () => {
     switch (activeTab) {
@@ -47,7 +53,7 @@ const Dashboard = () => {
       case 'settings':
         return canAccessSettings ? <SystemSettingsPanel /> : <div>Access Denied</div>;
       default:
-        return <SalesPanel />;
+        return <TouchDashboard userRole={userRole} />;
     }
   };
 
@@ -79,7 +85,7 @@ const Dashboard = () => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 p-6">
+          <main className="flex-1">
             {renderActivePanel()}
           </main>
         </SidebarInset>

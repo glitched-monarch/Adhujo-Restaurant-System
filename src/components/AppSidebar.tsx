@@ -25,7 +25,8 @@ import {
   LogOut,
   ChefHat,
   TrendingUp,
-  ShieldCheck
+  ShieldCheck,
+  Home
 } from "lucide-react";
 
 interface AppSidebarProps {
@@ -37,14 +38,25 @@ export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { state } = useSidebar();
   
-  const activeTab = searchParams.get('tab') || 'sales';
+  const activeTab = searchParams.get('tab') || '';
   const isCollapsed = state === "collapsed";
 
   const handleTabChange = (tab: string) => {
-    setSearchParams({ tab });
+    if (tab === 'dashboard') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab });
+    }
   };
 
   const menuItems = [
+    { 
+      id: 'dashboard', 
+      label: 'Dashboard', 
+      icon: Home, 
+      description: 'Main dashboard overview',
+      access: ['admin', 'manager', 'staff'] 
+    },
     { 
       id: 'sales', 
       label: 'Sales', 
@@ -135,7 +147,7 @@ export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => handleTabChange(item.id)}
-                    isActive={activeTab === item.id}
+                    isActive={item.id === 'dashboard' ? !activeTab : activeTab === item.id}
                     className="w-full justify-start"
                   >
                     <item.icon className="h-4 w-4" />
