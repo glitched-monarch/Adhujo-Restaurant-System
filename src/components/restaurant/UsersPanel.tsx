@@ -1,289 +1,182 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Shield, User } from "lucide-react";
-
-interface SystemUser {
-  id: string;
-  username: string;
-  email: string;
-  role: "admin" | "manager" | "staff";
-  status: "active" | "inactive";
-  lastLogin: Date;
-}
+import { ArrowLeft, Plus, Search, UserCheck, UserX, Edit2, Trash2 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 export const UsersPanel = () => {
-  const [users, setUsers] = useState<SystemUser[]>([
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+
+  const handleBack = () => {
+    setSearchParams({});
+  };
+
+  const users = [
     {
-      id: "1",
-      username: "admin",
-      email: "admin@restaurant.com",
+      id: 1,
+      name: "John Doe",
+      email: "john@restaurant.com",
       role: "admin",
       status: "active",
-      lastLogin: new Date("2024-01-05T10:30:00")
+      lastLogin: "2024-01-15 09:30 AM",
     },
     {
-      id: "2",
-      username: "manager1",
-      email: "manager@restaurant.com",
+      id: 2,
+      name: "Jane Smith",
+      email: "jane@restaurant.com",
       role: "manager",
       status: "active",
-      lastLogin: new Date("2024-01-05T09:15:00")
+      lastLogin: "2024-01-14 05:20 PM",
     },
     {
-      id: "3",
-      username: "staff1",
-      email: "staff1@restaurant.com",
-      role: "staff",
-      status: "active",
-      lastLogin: new Date("2024-01-04T16:45:00")
-    },
-    {
-      id: "4",
-      username: "staff2",
-      email: "staff2@restaurant.com",
+      id: 3,
+      name: "Mike Johnson",
+      email: "mike@restaurant.com",
       role: "staff",
       status: "inactive",
-      lastLogin: new Date("2024-01-02T14:20:00")
-    }
-  ]);
-
-  const [newUser, setNewUser] = useState({
-    username: "",
-    email: "",
-    role: "staff" as "admin" | "manager" | "staff",
-    password: ""
-  });
-
-  const addUser = () => {
-    if (!newUser.username || !newUser.email || !newUser.password) return;
-
-    const user: SystemUser = {
-      id: Date.now().toString(),
-      username: newUser.username,
-      email: newUser.email,
-      role: newUser.role,
+      lastLogin: "2024-01-10 11:15 AM",
+    },
+    {
+      id: 4,
+      name: "Sarah Wilson",
+      email: "sarah@restaurant.com",
+      role: "manager",
       status: "active",
-      lastLogin: new Date()
-    };
+      lastLogin: "2024-01-15 08:45 AM",
+    },
+  ];
 
-    setUsers([...users, user]);
-    setNewUser({ username: "", email: "", role: "staff", password: "" });
-  };
-
-  const toggleUserStatus = (id: string) => {
-    setUsers(users.map(user =>
-      user.id === id
-        ? { ...user, status: user.status === "active" ? "inactive" : "active" }
-        : user
-    ));
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "admin":
-        return <Shield className="h-4 w-4" />;
-      case "manager":
-        return <UserPlus className="h-4 w-4" />;
-      default:
-        return <User className="h-4 w-4" />;
-    }
-  };
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case "admin":
-        return "destructive";
-      case "manager":
-        return "default";
-      default:
-        return "secondary";
+      case "admin": return "default";
+      case "manager": return "secondary";
+      case "staff": return "outline";
+      default: return "outline";
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Add New User */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New User</CardTitle>
-            <CardDescription>Create a new user account</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={newUser.username}
-                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                placeholder="Enter username"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                placeholder="Enter email"
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={newUser.password}
-                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                placeholder="Enter password"
-              />
-            </div>
-            <div>
-              <Label htmlFor="role">Role</Label>
-              <select
-                id="role"
-                value={newUser.role}
-                onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="staff">Staff</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <Button onClick={addUser} className="w-full">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
-          </CardContent>
-        </Card>
+  const getStatusBadgeVariant = (status: string) => {
+    return status === "active" ? "default" : "destructive";
+  };
 
-        {/* User Statistics */}
-        <Card>
-          <CardHeader>
-            <CardTitle>User Statistics</CardTitle>
-            <CardDescription>System user overview</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>Total Users: {users.length}</div>
-                <div>Active Users: {users.filter(u => u.status === "active").length}</div>
-                <div>Admins: {users.filter(u => u.role === "admin").length}</div>
-                <div>Managers: {users.filter(u => u.role === "manager").length}</div>
-                <div>Staff: {users.filter(u => u.role === "staff").length}</div>
-                <div>Inactive: {users.filter(u => u.status === "inactive").length}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b px-6 py-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleBack}
+            className="rounded-full"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold">User Management</h2>
+            <p className="text-gray-600">Manage user accounts and permissions</p>
+          </div>
+        </div>
       </div>
 
-      {/* User Management Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>Manage system users and their permissions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Username</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.username}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={getRoleBadgeVariant(user.role)} className="flex items-center gap-1 w-fit">
-                      {getRoleIcon(user.role)}
-                      {user.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === "active" ? "default" : "secondary"}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{user.lastLogin.toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toggleUserStatus(user.id)}
-                    >
-                      {user.status === "active" ? "Deactivate" : "Activate"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Role Permissions Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Role Permissions</CardTitle>
-          <CardDescription>Overview of what each role can do</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-5 w-5 text-red-500" />
-                <h4 className="font-semibold">Admin</h4>
-              </div>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Full system access</li>
-                <li>• User management</li>
-                <li>• All reports and analytics</li>
-                <li>• System configuration</li>
-              </ul>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="flex gap-4 items-center flex-1">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <UserPlus className="h-5 w-5 text-blue-500" />
-                <h4 className="font-semibold">Manager</h4>
-              </div>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Sales management</li>
-                <li>• Inventory management</li>
-                <li>• Reports viewing</li>
-                <li>• Staff oversight</li>
-              </ul>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <User className="h-5 w-5 text-green-500" />
-                <h4 className="font-semibold">Staff</h4>
-              </div>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Process sales</li>
-                <li>• View inventory</li>
-                <li>• Basic reporting</li>
-                <li>• Order management</li>
-              </ul>
-            </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="staff">Staff</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add User
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredUsers.map((user) => (
+            <Card key={user.id}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{user.name}</CardTitle>
+                    <CardDescription>{user.email}</CardDescription>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Role:</span>
+                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Status:</span>
+                    <Badge variant={getStatusBadgeVariant(user.status)}>
+                      {user.status === "active" ? (
+                        <><UserCheck className="h-3 w-3 mr-1" /> Active</>
+                      ) : (
+                        <><UserX className="h-3 w-3 mr-1" /> Inactive</>
+                      )}
+                    </Badge>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-gray-500">
+                      Last login: {user.lastLogin}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {filteredUsers.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-500">No users found matching your criteria.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

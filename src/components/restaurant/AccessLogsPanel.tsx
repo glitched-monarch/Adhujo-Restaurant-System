@@ -1,17 +1,23 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, CheckCircle, XCircle, User, Clock } from "lucide-react";
+import { ArrowLeft, Search, CheckCircle, XCircle, User, Clock } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { DateRangeFilter, DateRange } from "@/components/common/DateRangeFilter";
 import { isWithinInterval, parseISO } from "date-fns";
 
 export const AccessLogsPanel = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
+
+  const handleBack = () => {
+    setSearchParams({});
+  };
 
   // Mock data for access logs
   const accessLogs = [
@@ -73,87 +79,102 @@ export const AccessLogsPanel = () => {
   });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Access Logs</h2>
-        <p className="text-gray-600">Monitor all system activities and user actions</p>
-      </div>
-
-      <div className="space-y-4">
-        <DateRangeFilter onDateRangeChange={setDateRange} />
-        
-        <div className="flex gap-4 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search by user or action..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b px-6 py-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleBack}
+            className="rounded-full"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold">Access Logs</h2>
+            <p className="text-gray-600">Monitor all system activities and user actions</p>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="success">Success Only</SelectItem>
-              <SelectItem value="failed">Failed Only</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
-      <div className="space-y-3">
-        {filteredLogs.map((log) => (
-          <Card key={log.id}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3">
-                  <div className="mt-1">
-                    {log.success ? (
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{log.action}</h4>
-                      <Badge variant={log.success ? "default" : "destructive"}>
-                        {log.success ? "Success" : "Failed"}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>{log.user}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>{log.timestamp}</span>
-                      </div>
-                      {log.parameters && (
-                        <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-50 rounded">
-                          {log.parameters}
-                        </div>
+      <div className="p-6 space-y-6">
+        <div className="space-y-4">
+          <DateRangeFilter onDateRangeChange={setDateRange} />
+          
+          <div className="flex gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by user or action..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="success">Success Only</SelectItem>
+                <SelectItem value="failed">Failed Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {filteredLogs.map((log) => (
+            <Card key={log.id}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3">
+                    <div className="mt-1">
+                      {log.success ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-500" />
                       )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">{log.action}</h4>
+                        <Badge variant={log.success ? "default" : "destructive"}>
+                          {log.success ? "Success" : "Failed"}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          <span>{log.user}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          <span>{log.timestamp}</span>
+                        </div>
+                        {log.parameters && (
+                          <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-50 rounded">
+                            {log.parameters}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        
-        {filteredLogs.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-gray-500">No access logs found matching your criteria.</p>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          ))}
+          
+          {filteredLogs.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-gray-500">No access logs found matching your criteria.</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

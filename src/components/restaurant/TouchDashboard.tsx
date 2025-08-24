@@ -1,6 +1,6 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useSearchParams } from "react-router-dom";
 import {
   ShoppingCart,
@@ -11,7 +11,8 @@ import {
   Settings,
   ChefHat,
   Calendar,
-  User
+  User,
+  LogOut
 } from "lucide-react";
 
 interface TouchDashboardProps {
@@ -23,6 +24,10 @@ export const TouchDashboard = ({ userRole }: TouchDashboardProps) => {
 
   const handleSectionClick = (section: string) => {
     setSearchParams({ tab: section });
+  };
+
+  const handleLogout = () => {
+    window.location.href = "/login";
   };
 
   // Get current date and time
@@ -141,9 +146,20 @@ export const TouchDashboard = ({ userRole }: TouchDashboardProps) => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold text-foreground">Adhujo Restaurant</h1>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm text-green-600 font-medium">Online</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-green-600 font-medium">Online</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
         <div className="mb-4">
