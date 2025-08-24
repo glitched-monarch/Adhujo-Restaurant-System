@@ -1,19 +1,56 @@
 
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Filter, Search, Star, Eye, Utensils, DollarSign } from "lucide-react";
+import { ArrowLeft, Plus, Filter, Search, Star, Eye, Utensils, DollarSign, Edit, Trash2, EyeIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const ModernMenuPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
   const handleBack = () => {
     setSearchParams({});
+  };
+
+  const handleAddItem = () => {
+    toast({
+      title: "Add Menu Item",
+      description: "Opening add menu item form...",
+    });
+  };
+
+  const handleViewItem = (itemName: string) => {
+    toast({
+      title: "View Item",
+      description: `Viewing details for ${itemName}...`,
+    });
+  };
+
+  const handleEditItem = (itemName: string) => {
+    toast({
+      title: "Edit Item",
+      description: `Editing ${itemName}...`,
+    });
+  };
+
+  const handleDeleteItem = (itemName: string) => {
+    toast({
+      title: "Delete Item",
+      description: `Are you sure you want to delete ${itemName}?`,
+    });
+  };
+
+  const handleFilter = () => {
+    toast({
+      title: "Filter",
+      description: "Opening filter options...",
+    });
   };
 
   const stats = [
@@ -107,7 +144,7 @@ export const ModernMenuPanel = () => {
             </Button>
             <h1 className="text-xl font-semibold text-gray-900">Menu Management</h1>
           </div>
-          <Button className="bg-purple-600 hover:bg-purple-700">
+          <Button onClick={handleAddItem} className="bg-purple-600 hover:bg-purple-700">
             <Plus className="h-4 w-4 mr-2" />
             Add Item
           </Button>
@@ -166,7 +203,7 @@ export const ModernMenuPanel = () => {
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleFilter}>
                 <Filter className="h-4 w-4 mr-2" />
                 Filter
               </Button>
@@ -212,9 +249,27 @@ export const ModernMenuPanel = () => {
                           <span className="text-green-600 ml-2">{item.margin}</span>
                         </div>
                         <div className="flex gap-1">
-                          <Button size="sm" variant="outline">👁️</Button>
-                          <Button size="sm" variant="outline">✏️</Button>
-                          <Button size="sm" variant="outline">🗑️</Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleViewItem(item.name)}
+                          >
+                            <EyeIcon className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEditItem(item.name)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDeleteItem(item.name)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     </div>

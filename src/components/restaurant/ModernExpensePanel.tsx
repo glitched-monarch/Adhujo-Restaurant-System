@@ -1,20 +1,43 @@
 
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Filter, Search, DollarSign, Calendar, TrendingUp, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Filter, Search, DollarSign, Calendar, TrendingUp, FileText, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useSearchParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const ModernExpensePanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activePeriod, setActivePeriod] = useState("month");
   const [activeTab, setActiveTab] = useState("expenses");
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
   const handleBack = () => {
     setSearchParams({});
+  };
+
+  const handleAddExpense = () => {
+    toast({
+      title: "Add Expense",
+      description: "Opening add expense form...",
+    });
+  };
+
+  const handleExport = () => {
+    toast({
+      title: "Export",
+      description: "Exporting expense data...",
+    });
+  };
+
+  const handleFilter = () => {
+    toast({
+      title: "Filter",
+      description: "Opening filter options...",
+    });
   };
 
   const stats = [
@@ -110,10 +133,11 @@ export const ModernExpensePanel = () => {
             <h1 className="text-xl font-semibold text-gray-900">Expense Management</h1>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
-              📤 Export
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
             </Button>
-            <Button className="bg-red-600 hover:bg-red-700">
+            <Button onClick={handleAddExpense} className="bg-red-600 hover:bg-red-700">
               <Plus className="h-4 w-4 mr-2" />
               Add Expense
             </Button>
@@ -225,7 +249,7 @@ export const ModernExpensePanel = () => {
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleFilter}>
                 <Filter className="h-4 w-4 mr-2" />
                 Filter
               </Button>

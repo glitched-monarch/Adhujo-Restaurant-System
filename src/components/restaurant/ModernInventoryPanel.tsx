@@ -1,20 +1,49 @@
-
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Filter, Search, Package, AlertTriangle, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowLeft, Plus, Filter, Search, Package, AlertTriangle, TrendingDown, TrendingUp, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useSearchParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const ModernInventoryPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("items");
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
   const handleBack = () => {
     setSearchParams({});
+  };
+
+  const handleAddItem = () => {
+    toast({
+      title: "Add Item",
+      description: "Opening add item form...",
+    });
+  };
+
+  const handleEditItem = (itemName: string) => {
+    toast({
+      title: "Edit Item",
+      description: `Editing ${itemName}...`,
+    });
+  };
+
+  const handleDeleteItem = (itemName: string) => {
+    toast({
+      title: "Delete Item",
+      description: `Are you sure you want to delete ${itemName}?`,
+    });
+  };
+
+  const handleFilter = () => {
+    toast({
+      title: "Filter",
+      description: "Opening filter options...",
+    });
   };
 
   const stats = [
@@ -115,7 +144,7 @@ export const ModernInventoryPanel = () => {
             </Button>
             <h1 className="text-xl font-semibold text-gray-900">Inventory Management</h1>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleAddItem} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
             Add Item
           </Button>
@@ -174,7 +203,7 @@ export const ModernInventoryPanel = () => {
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleFilter}>
                 <Filter className="h-4 w-4 mr-2" />
                 Filter
               </Button>
@@ -195,11 +224,19 @@ export const ModernInventoryPanel = () => {
                       <Badge className={getStatusColor(item.status)}>
                         {item.status}
                       </Badge>
-                      <Button size="sm" variant="outline">
-                        ✏️
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEditItem(item.name)}
+                      >
+                        <Edit className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="outline">
-                        🗑️
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDeleteItem(item.name)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

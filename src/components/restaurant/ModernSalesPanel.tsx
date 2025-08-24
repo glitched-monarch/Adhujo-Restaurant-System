@@ -1,19 +1,48 @@
-
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Filter, Search, ShoppingCart, Receipt, Clock, DollarSign } from "lucide-react";
+import { ArrowLeft, Plus, Filter, Search, ShoppingCart, Receipt, Clock, DollarSign, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const ModernSalesPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState("tables");
+  const [activeTab, setActiveTab] = useState("orders");
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
   const handleBack = () => {
     setSearchParams({});
+  };
+
+  const handleNewOrder = () => {
+    toast({
+      title: "New Order",
+      description: "Opening new order form...",
+    });
+  };
+
+  const handleCompleteOrder = (orderId: string) => {
+    toast({
+      title: "Order Completed",
+      description: `Order ${orderId} has been marked as completed.`,
+    });
+  };
+
+  const handleCancelOrder = (orderId: string) => {
+    toast({
+      title: "Order Cancelled",
+      description: `Order ${orderId} has been cancelled.`,
+    });
+  };
+
+  const handleFilter = () => {
+    toast({
+      title: "Filter",
+      description: "Opening filter options...",
+    });
   };
 
   const stats = [
@@ -104,7 +133,7 @@ export const ModernSalesPanel = () => {
             </Button>
             <h1 className="text-xl font-semibold text-gray-900">Sales Management</h1>
           </div>
-          <Button className="bg-green-600 hover:bg-green-700">
+          <Button onClick={handleNewOrder} className="bg-green-600 hover:bg-green-700">
             <Plus className="h-4 w-4 mr-2" />
             New Order
           </Button>
@@ -163,7 +192,7 @@ export const ModernSalesPanel = () => {
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleFilter}>
                 <Filter className="h-4 w-4 mr-2" />
                 Filter
               </Button>
@@ -189,11 +218,21 @@ export const ModernSalesPanel = () => {
                     <p className="font-bold text-gray-900">{order.amount}</p>
                     <p className="text-sm text-gray-600">{order.items}</p>
                     <div className="flex gap-2 mt-2">
-                      <Button size="sm" variant="outline" className="text-xs">
-                        ✓
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-xs"
+                        onClick={() => handleCompleteOrder(order.id)}
+                      >
+                        <Check className="h-3 w-3" />
                       </Button>
-                      <Button size="sm" variant="outline" className="text-xs">
-                        ✕
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-xs"
+                        onClick={() => handleCancelOrder(order.id)}
+                      >
+                        <X className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>

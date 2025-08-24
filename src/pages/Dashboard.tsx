@@ -1,8 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
 import { TouchDashboard } from "@/components/restaurant/TouchDashboard";
 import { ModernSalesPanel } from "@/components/restaurant/ModernSalesPanel";
 import { ModernInventoryPanel } from "@/components/restaurant/ModernInventoryPanel";
@@ -57,44 +55,8 @@ const Dashboard = () => {
     }
   };
 
-  // For modern panels, render them directly without sidebar
-  const modernPanels = ['sales', 'inventory', 'menu', 'expenses'];
-  if (modernPanels.includes(activeTab || '')) {
-    return renderActivePanel();
-  }
-
-  // For other panels, use the sidebar layout
-  const getPageTitle = () => {
-    switch (activeTab) {
-      case 'reports': return 'Reports & Financials';
-      case 'users': return 'User Management';
-      case 'logs': return 'Access Logs';
-      case 'settings': return 'System Settings';
-      default: return 'Dashboard';
-    }
-  };
-
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar userRole={userRole} onLogout={handleLogout} />
-        <SidebarInset>
-          {/* Header */}
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex-1">
-              <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
-            </div>
-          </header>
-
-          {/* Main Content */}
-          <main className="flex-1">
-            {renderActivePanel()}
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
-  );
+  // Render all panels without sidebar layout
+  return renderActivePanel();
 };
 
 export default Dashboard;
