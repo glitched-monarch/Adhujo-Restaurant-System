@@ -1,23 +1,40 @@
 
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Filter, Search, Package, AlertTriangle, TrendingDown, TrendingUp, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Search, Package, AlertTriangle, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useFilteredInventory, InventoryFilters } from "@/hooks/useFilteredInventory";
 import { NewInventoryForm } from "./forms/NewInventoryForm";
+import { InventoryItemsTab } from "./inventory/InventoryItemsTab";
+import { InventoryReportsTab } from "./inventory/InventoryReportsTab";
 
 export const ModernInventoryPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("items");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
   const [showNewItemForm, setShowNewItemForm] = useState(false);
   const { toast } = useToast();
+
+  const [filters, setFilters] = useState<InventoryFilters>({
+    search: "",
+    category: "all",
+    stockStatus: "all"
+  });
+
+  const {
+    inventory,
+    allInventory,
+    categories,
+    stockStats,
+    loading,
+    error,
+    addInventoryItem,
+    updateInventoryItem,
+    deleteInventoryItem
+  } = useFilteredInventory(filters);
 
   const handleBack = () => {
     setSearchParams({});
@@ -27,24 +44,61 @@ export const ModernInventoryPanel = () => {
     setShowNewItemForm(true);
   };
 
-  const handleNewItemSubmit = (itemData: any) => {
-    console.log("New inventory item:", itemData);
-    setShowNewItemForm(false);
+  const handleNewItemSubmit = async (itemData: any) => {
+    try {
+      await addInventoryItem(itemData);
+      setShowNewItemForm(false);
+      toast({
+        title: "Success",
+        description: "Inventory item added successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add inventory item",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleEditItem = (itemName: string) => {
+  const handleEditItem = (item: any) => {
     toast({
       title: "Edit Item",
-      description: `Editing ${itemName}...`,
+      description: `Editing ${item.name}...`,
     });
   };
 
-  const handleDeleteItem = (itemName: string) => {
-    toast({
-      title: "Delete Item",
-      description: `Are you sure you want to delete ${itemName}?`,
-    });
+  const handleDeleteItem = async (id: string) => {
+    try {
+      await deleteInventoryItem(id);
+      toast({
+        title: "Success",
+        description: "Item deleted successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete item",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div>Loading inventory...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div>Error loading inventory: {error}</div>
+      </div>
+    );
+  }
 
   if (showNewItemForm) {
     return (
@@ -58,25 +112,25 @@ export const ModernInventoryPanel = () => {
   const stats = [
     {
       title: "Total Items",
-      value: "245",
+      value: stockStats.total.toString(),
       icon: Package,
       color: "bg-blue-100 text-blue-600"
     },
     {
       title: "Low Stock Items",
-      value: "15",
+      value: stockStats.low.toString(),
       icon: AlertTriangle,
       color: "bg-yellow-100 text-yellow-600"
     },
     {
       title: "Out of Stock",
-      value: "3",
+      value: stockStats.out.toString(),
       icon: TrendingDown,
       color: "bg-red-100 text-red-600"
     },
     {
-      title: "Total Value",
-      value: "KSH 124,500",
+      title: "Good Stock",
+      value: stockStats.good.toString(),
       icon: TrendingUp,
       color: "bg-green-100 text-green-600"
     }
@@ -88,89 +142,14 @@ export const ModernInventoryPanel = () => {
     { id: "reports", label: "Reports" }
   ];
 
-  const allItems = [
-    {
-      name: "Chicken Breast",
-      category: "Meat",
-      currentStock: "25 kg",
-      costPerUnit: "KSH 899",
-      total: "KSH 22,475",
-      lastRestocked: "2024-01-10",
-      minStock: "50 kg",
-      status: "low",
-      stockLevel: 50
-    },
-    {
-      name: "Tomatoes",
-      category: "Vegetables",
-      currentStock: "80 kg",
-      costPerUnit: "KSH 350",
-      total: "KSH 28,000",
-      lastRestocked: "2024-01-12",
-      minStock: "30 kg",
-      status: "good",
-      stockLevel: 90
-    },
-    {
-      name: "Olive Oil",
-      category: "Oils",
-      currentStock: "5 bottles",
-      costPerUnit: "KSH 1,299",
-      total: "KSH 6,495",
-      lastRestocked: "2024-01-08",
-      minStock: "20 bottles",
-      status: "critical",
-      stockLevel: 25
-    },
-    {
-      name: "Rice",
-      category: "Grains",
-      currentStock: "100 kg",
-      costPerUnit: "KSH 150",
-      total: "KSH 15,000",
-      lastRestocked: "2024-01-14",
-      minStock: "50 kg",
-      status: "good",
-      stockLevel: 85
-    },
-    {
-      name: "Onions",
-      category: "Vegetables",
-      currentStock: "45 kg",
-      costPerUnit: "KSH 200",
-      total: "KSH 9,000",
-      lastRestocked: "2024-01-11",
-      minStock: "30 kg",
-      status: "good",
-      stockLevel: 75
-    }
-  ];
-
-  // Filter items based on search and category
-  const filteredItems = allItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || item.category.toLowerCase() === categoryFilter.toLowerCase();
-    return matchesSearch && matchesCategory;
-  });
-
-  const categories = ["Meat", "Vegetables", "Oils", "Grains", "Dairy", "Spices"];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "good": return "bg-green-100 text-green-800";
-      case "low": return "bg-yellow-100 text-yellow-800";
-      case "critical": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
   const renderCategoriesContent = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {categories.map((category, index) => {
-        const categoryItems = allItems.filter(item => item.category === category);
-        const totalValue = categoryItems.reduce((sum, item) => {
-          return sum + parseInt(item.total.replace('KSH ', '').replace(',', ''));
-        }, 0);
+        const categoryItems = allInventory.filter(item => {
+          const itemCategory = getItemCategory(item.name);
+          return itemCategory === category;
+        });
+        const totalValue = categoryItems.reduce((sum, item) => sum + (item.quantity * item.cost), 0);
         
         return (
           <Card key={index} className="hover:shadow-md transition-shadow">
@@ -181,14 +160,14 @@ export const ModernInventoryPanel = () => {
                 <p className="text-lg font-bold text-green-600">KSH {totalValue.toLocaleString()}</p>
                 <div className="flex flex-wrap gap-1">
                   {categoryItems.slice(0, 3).map((item, idx) => (
-                    <Badge key={idx} variant="secondary" className="text-xs">
+                    <span key={idx} className="text-xs bg-gray-100 px-2 py-1 rounded">
                       {item.name}
-                    </Badge>
+                    </span>
                   ))}
                   {categoryItems.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
+                    <span className="text-xs bg-gray-200 px-2 py-1 rounded">
                       +{categoryItems.length - 3} more
-                    </Badge>
+                    </span>
                   )}
                 </div>
               </div>
@@ -196,56 +175,6 @@ export const ModernInventoryPanel = () => {
           </Card>
         );
       })}
-    </div>
-  );
-
-  const renderReportsContent = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Stock Status Summary</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span>Items in Stock</span>
-              <span className="font-bold text-green-600">227</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Low Stock Items</span>
-              <span className="font-bold text-yellow-600">15</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Out of Stock</span>
-              <span className="font-bold text-red-600">3</span>
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t">
-              <span>Total Inventory Value</span>
-              <span className="font-bold text-blue-600">KSH 124,500</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Category Breakdown</h3>
-          <div className="space-y-3">
-            {categories.slice(0, 5).map((category, index) => {
-              const categoryItems = allItems.filter(item => item.category === category);
-              const percentage = (categoryItems.length / allItems.length) * 100;
-              
-              return (
-                <div key={index}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{category}</span>
-                    <span>{categoryItems.length} items</span>
-                  </div>
-                  <Progress value={percentage} className="h-2" />
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 
@@ -320,22 +249,39 @@ export const ModernInventoryPanel = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Search inventory items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                     className="pl-10"
                   />
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <Select 
+                  value={filters.category} 
+                  onValueChange={(value) => setFilters({ ...filters, category: value })}
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Filter by category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
                     {categories.map((category) => (
-                      <SelectItem key={category} value={category.toLowerCase()}>
+                      <SelectItem key={category} value={category}>
                         {category}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+                <Select 
+                  value={filters.stockStatus} 
+                  onValueChange={(value) => setFilters({ ...filters, stockStatus: value as any })}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by stock" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Stock</SelectItem>
+                    <SelectItem value="good">Good Stock</SelectItem>
+                    <SelectItem value="low">Low Stock</SelectItem>
+                    <SelectItem value="out">Out of Stock</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -345,68 +291,30 @@ export const ModernInventoryPanel = () => {
           {/* Content */}
           <div className="p-6">
             {activeTab === "items" && (
-              <div className="space-y-6">
-                {filteredItems.map((item, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-600">{item.category}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge className={getStatusColor(item.status)}>
-                          {item.status}
-                        </Badge>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditItem(item.name)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDeleteItem(item.name)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Current Stock</p>
-                        <p className="text-xl font-bold text-gray-900">{item.currentStock}</p>
-                        <Progress value={item.stockLevel} className="mt-2" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Cost per Unit</p>
-                        <p className="text-xl font-bold text-gray-900">{item.costPerUnit}</p>
-                        <p className="text-sm text-gray-500">Total: {item.total}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Last Restocked</p>
-                        <p className="text-xl font-bold text-gray-900">{item.lastRestocked}</p>
-                        <p className="text-sm text-gray-500">Min: {item.minStock}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {filteredItems.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No items found matching your criteria.</p>
-                  </div>
-                )}
-              </div>
+              <InventoryItemsTab 
+                inventory={inventory}
+                onEdit={handleEditItem}
+                onDelete={handleDeleteItem}
+              />
             )}
             
             {activeTab === "categories" && renderCategoriesContent()}
-            {activeTab === "reports" && renderReportsContent()}
+            
+            {activeTab === "reports" && (
+              <InventoryReportsTab inventory={allInventory} />
+            )}
           </div>
         </div>
       </div>
     </div>
   );
+};
+
+const getItemCategory = (itemName: string): string => {
+  const name = itemName.toLowerCase();
+  if (name.includes('chicken') || name.includes('beef') || name.includes('fish')) return 'Meat & Fish';
+  if (name.includes('lettuce') || name.includes('tomato') || name.includes('potato')) return 'Vegetables';  
+  if (name.includes('oil') || name.includes('butter')) return 'Oils & Fats';
+  if (name.includes('flour') || name.includes('sugar')) return 'Dry Goods';
+  return 'Other';
 };

@@ -4,76 +4,95 @@ import { ArrowLeft, Plus, Filter, Search, DollarSign, Calendar, TrendingUp, File
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useExpenses } from "@/hooks/useExpenses";
+import { ExpenseForm } from "./expense/ExpenseForm";
+import { ExpenseList } from "./expense/ExpenseList";
 
 export const ModernExpensePanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activePeriod, setActivePeriod] = useState("month");
   const [activeTab, setActiveTab] = useState("expenses");
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [showAddForm, setShowAddForm] = useState(false);
   const { toast } = useToast();
+  
+  const { expenses, categories, loading } = useExpenses();
 
   const handleBack = () => {
     setSearchParams({});
   };
 
   const handleAddExpense = () => {
-    toast({
-      title: "Add Expense",
-      description: "Opening add expense form...",
-    });
+    setShowAddForm(true);
   };
 
   const handleExport = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Date,Description,Category,Amount,Payment Method,Status\n" +
+      expenses.map(expense => 
+        `${expense.date.toLocaleDateString()},"${expense.description}","${expense.category}",${expense.amount},"${expense.paymentMethod}","${expense.approvalStatus}"`
+      ).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "expenses.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
     toast({
-      title: "Export",
-      description: "Exporting expense data...",
+      title: "Export Complete",
+      description: "Expenses data exported successfully",
     });
   };
 
-  const handleFilter = () => {
-    toast({
-      title: "Filter",
-      description: "Opening filter options...",
-    });
-  };
+  // Filter expenses based on search and category
+  const filteredExpenses = expenses.filter(expense => {
+    const matchesSearch = expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         expense.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || expense.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Calculate stats
+  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const pendingExpenses = filteredExpenses.filter(e => e.approvalStatus === 'pending').length;
+  const thisMonthExpenses = filteredExpenses.filter(e => {
+    const expenseMonth = e.date.getMonth();
+    const currentMonth = new Date().getMonth();
+    return expenseMonth === currentMonth;
+  }).reduce((sum, expense) => sum + expense.amount, 0);
 
   const stats = [
     {
       title: "Total Expenses",
-      value: "$9,700",
-      change: "+12.5% from last month",
+      value: `KSH ${totalExpenses.toLocaleString()}`,
       icon: DollarSign,
       color: "bg-red-100 text-red-600"
     },
     {
       title: "Pending Approvals",
-      value: "3",
+      value: pendingExpenses.toString(),
       icon: Calendar,
       color: "bg-yellow-100 text-yellow-600"
     },
     {
       title: "This Month",
-      value: "$8,450",
-      change: "-5.2% from last month",
+      value: `KSH ${thisMonthExpenses.toLocaleString()}`,
       icon: TrendingUp,
       color: "bg-blue-100 text-blue-600"
     },
     {
       title: "Average Daily",
-      value: "$281",
+      value: `KSH ${Math.round(thisMonthExpenses / 30).toLocaleString()}`,
       icon: FileText,
       color: "bg-purple-100 text-purple-600"
     }
-  ];
-
-  const periods = [
-    { id: "week", label: "This Week" },
-    { id: "month", label: "This Month" },
-    { id: "quarter", label: "This Quarter" },
-    { id: "year", label: "This Year" }
   ];
 
   const tabs = [
@@ -83,38 +102,57 @@ export const ModernExpensePanel = () => {
     { id: "budget", label: "Budget" }
   ];
 
-  const expenseCategories = [
-    {
-      category: "Food & Ingredients",
-      amount: "$4,250",
-      percentage: 35,
-      color: "bg-green-500"
-    },
-    {
-      category: "Staff",
-      amount: "$5,200",
-      percentage: 43,
-      color: "bg-blue-500"
-    },
-    {
-      category: "Utilities",
-      amount: "$1,350",
-      percentage: 11,
-      color: "bg-yellow-500"
-    },
-    {
-      category: "Equipment",
-      amount: "$800",
-      percentage: 7,
-      color: "bg-purple-500"
-    },
-    {
-      category: "Marketing",
-      amount: "$500",
-      percentage: 4,
-      color: "bg-pink-500"
-    }
-  ];
+  const renderCategoriesContent = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {categories.map((category) => {
+        const categoryExpenses = filteredExpenses.filter(e => e.category === category.name);
+        const totalSpent = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const percentage = category.budget > 0 ? (totalSpent / category.budget) * 100 : 0;
+        
+        return (
+          <Card key={category.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-2">{category.name}</h3>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">Budget: KSH {category.budget.toLocaleString()}</p>
+                <p className="text-lg font-bold" style={{ color: category.color }}>
+                  KSH {totalSpent.toLocaleString()}
+                </p>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="h-2 rounded-full"
+                    style={{ 
+                      width: `${Math.min(100, percentage)}%`,
+                      backgroundColor: category.color 
+                    }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500">{percentage.toFixed(1)}% of budget used</p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+
+  if (showAddForm) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-2xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => setShowAddForm(false)}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Expenses
+          </Button>
+          <ExpenseForm onSuccess={() => setShowAddForm(false)} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -146,23 +184,6 @@ export const ModernExpensePanel = () => {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Period Tabs */}
-        <div className="flex gap-2">
-          {periods.map((period) => (
-            <button
-              key={period.id}
-              onClick={() => setActivePeriod(period.id)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm ${
-                activePeriod === period.id
-                  ? "bg-gray-900 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border"
-              }`}
-            >
-              {period.label}
-            </button>
-          ))}
-        </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, index) => (
@@ -172,13 +193,6 @@ export const ModernExpensePanel = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                     <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                    {stat.change && (
-                      <p className={`text-xs mt-1 ${
-                        stat.change.includes('+') ? 'text-red-600' : 'text-green-600'
-                      }`}>
-                        {stat.change}
-                      </p>
-                    )}
                   </div>
                   <div className={`p-3 rounded-full ${stat.color}`}>
                     <stat.icon className="h-6 w-6" />
@@ -188,34 +202,6 @@ export const ModernExpensePanel = () => {
             </Card>
           ))}
         </div>
-
-        {/* Expense Categories */}
-        <Card className="bg-white">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Expense Categories</h2>
-            <div className="space-y-4">
-              {expenseCategories.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900">{item.category}</span>
-                      <div className="text-right">
-                        <span className="font-bold text-gray-900">{item.amount}</span>
-                        <span className="text-sm text-gray-500 ml-2">{item.percentage}%</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`${item.color} h-2 rounded-full`}
-                        style={{ width: `${item.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Tabs */}
         <div className="bg-white rounded-lg border">
@@ -237,27 +223,56 @@ export const ModernExpensePanel = () => {
             </nav>
           </div>
 
-          {/* Search and Filter */}
-          <div className="p-6 border-b bg-gray-50">
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search expenses..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Search and Filter - Show for expenses and reports tabs */}
+          {(activeTab === "expenses" || activeTab === "reports") && (
+            <div className="p-6 border-b bg-gray-50">
+              <div className="flex gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search expenses..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Button variant="outline" onClick={handleFilter}>
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
             </div>
-          </div>
+          )}
 
+          {/* Content */}
           <div className="p-6">
-            <p className="text-gray-500">Expense details will be displayed here based on the selected tab and filters.</p>
+            {activeTab === "expenses" && (
+              <ExpenseList expenses={filteredExpenses} />
+            )}
+            
+            {activeTab === "categories" && renderCategoriesContent()}
+            
+            {activeTab === "reports" && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold">Expense Reports</h3>
+                <ExpenseList expenses={filteredExpenses} />
+              </div>
+            )}
+            
+            {activeTab === "budget" && (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Budget management functionality coming soon.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
