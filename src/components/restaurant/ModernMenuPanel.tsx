@@ -1,19 +1,43 @@
+
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Filter, Search, ChefHat, Clock, Star, DollarSign, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Filter, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { NewMenuForm } from "./forms/NewMenuForm";
+import { useFilteredMenuItems, MenuFilters } from "@/hooks/useFilteredMenuItems";
+import { MenuItemsTab } from "./menu/MenuItemsTab";
+import { CategoriesTab } from "./menu/CategoriesTab";
+import { PricingTab } from "./menu/PricingTab";
+import { AnalyticsTab } from "./menu/AnalyticsTab";
 
 export const ModernMenuPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("items");
-  const [searchQuery, setSearchQuery] = useState("");
   const [showNewItemForm, setShowNewItemForm] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
+
+  const [filters, setFilters] = useState<MenuFilters>({
+    search: "",
+    category: "all",
+    availability: "all",
+    priceRange: null
+  });
+
+  const {
+    menuItems,
+    categories,
+    priceStats,
+    loading,
+    error,
+    addMenuItem,
+    updateMenuItem,
+    deleteMenuItem
+  } = useFilteredMenuItems(filters);
 
   const handleBack = () => {
     setSearchParams({});
@@ -23,30 +47,46 @@ export const ModernMenuPanel = () => {
     setShowNewItemForm(true);
   };
 
-  const handleNewItemSubmit = (itemData: any) => {
-    console.log("New menu item:", itemData);
-    setShowNewItemForm(false);
+  const handleNewItemSubmit = async (itemData: any) => {
+    try {
+      await addMenuItem(itemData);
+      setShowNewItemForm(false);
+      toast({
+        title: "Success",
+        description: "Menu item added successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add menu item",
+      });
+    }
   };
 
-  const handleEditItem = (itemName: string) => {
+  const handleEditItem = (item: any) => {
     toast({
       title: "Edit Item",
-      description: `Editing ${itemName}...`,
+      description: `Editing ${item.name}...`,
     });
   };
 
-  const handleDeleteItem = (itemName: string) => {
-    toast({
-      title: "Delete Item",
-      description: `Are you sure you want to delete ${itemName}?`,
-    });
+  const handleDeleteItem = async (id: number) => {
+    try {
+      await deleteMenuItem(id);
+      toast({
+        title: "Success",
+        description: "Menu item deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete menu item",
+      });
+    }
   };
 
-  const handleFilter = () => {
-    toast({
-      title: "Filter",
-      description: "Opening filter options...",
-    });
+  const handleFilterChange = (key: keyof MenuFilters, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   if (showNewItemForm) {
@@ -58,32 +98,13 @@ export const ModernMenuPanel = () => {
     );
   }
 
-  const stats = [
-    {
-      title: "Total Items",
-      value: "127",
-      icon: ChefHat,
-      color: "bg-orange-100 text-orange-600"
-    },
-    {
-      title: "Active Items",
-      value: "115",
-      icon: Star,
-      color: "bg-green-100 text-green-600"
-    },
-    {
-      title: "Avg. Prep Time",
-      value: "18 min",
-      icon: Clock,
-      color: "bg-blue-100 text-blue-600"
-    },
-    {
-      title: "Avg. Price",
-      value: "$24.50",
-      icon: DollarSign,
-      color: "bg-purple-100 text-purple-600"
-    }
-  ];
+  if (loading) {
+    return <div>Loading menu items...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   const tabs = [
     { id: "items", label: "Menu Items" },
@@ -91,48 +112,6 @@ export const ModernMenuPanel = () => {
     { id: "pricing", label: "Pricing" },
     { id: "analytics", label: "Analytics" }
   ];
-
-  const menuItems = [
-    {
-      name: "Grilled Salmon",
-      category: "Main Course",
-      price: "$28.99",
-      prepTime: "25 min",
-      status: "active",
-      orders: 45,
-      rating: 4.8,
-      description: "Fresh Atlantic salmon with herbs and lemon"
-    },
-    {
-      name: "Caesar Salad",
-      category: "Appetizer",
-      price: "$12.99",
-      prepTime: "10 min",
-      status: "active",
-      orders: 32,
-      rating: 4.5,
-      description: "Crisp romaine lettuce with parmesan and croutons"
-    },
-    {
-      name: "Chocolate Cake",
-      category: "Dessert",
-      price: "$8.99",
-      prepTime: "5 min",
-      status: "unavailable",
-      orders: 28,
-      rating: 4.9,
-      description: "Rich chocolate cake with vanilla ice cream"
-    }
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active": return "bg-green-100 text-green-800";
-      case "unavailable": return "bg-red-100 text-red-800";
-      case "seasonal": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -160,21 +139,48 @@ export const ModernMenuPanel = () => {
       <div className="p-6 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat, index) => (
-            <Card key={index} className="bg-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-full ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
+          <Card className="bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Items</p>
+                  <p className="text-2xl font-bold text-gray-900">{menuItems.length}</p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Categories</p>
+                  <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Avg Price</p>
+                  <p className="text-2xl font-bold text-gray-900">KSH {Math.round(priceStats.avg)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Available</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {menuItems.filter(item => item.availability).length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs */}
@@ -197,78 +203,92 @@ export const ModernMenuPanel = () => {
             </nav>
           </div>
 
-          {/* Search and Filter */}
-          <div className="p-6 border-b bg-gray-50">
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search menu items..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Search and Filter - Only show for items tab */}
+          {activeTab === "items" && (
+            <div className="p-6 border-b bg-gray-50">
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search menu items..."
+                    value={filters.search}
+                    onChange={(e) => handleFilterChange('search', e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter
+                </Button>
               </div>
-              <Button variant="outline" onClick={handleFilter}>
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
+
+              {showFilters && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Select 
+                    value={filters.category} 
+                    onValueChange={(value) => handleFilterChange('category', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select 
+                    value={filters.availability} 
+                    onValueChange={(value) => handleFilterChange('availability', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Availability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Items</SelectItem>
+                      <SelectItem value="available">Available Only</SelectItem>
+                      <SelectItem value="unavailable">Unavailable Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Content */}
           <div className="p-6">
-            <div className="space-y-6">
-              {menuItems.map((item, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-600">{item.category}</p>
-                      <p className="text-sm text-gray-500 mt-1">{item.description}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge className={getStatusColor(item.status)}>
-                        {item.status}
-                      </Badge>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleEditItem(item.name)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleDeleteItem(item.name)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Price</p>
-                      <p className="text-xl font-bold text-gray-900">{item.price}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Prep Time</p>
-                      <p className="text-xl font-bold text-gray-900">{item.prepTime}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Orders Today</p>
-                      <p className="text-xl font-bold text-gray-900">{item.orders}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Rating</p>
-                      <p className="text-xl font-bold text-gray-900">{item.rating}/5</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {activeTab === "items" && (
+              <MenuItemsTab
+                menuItems={menuItems}
+                onEdit={handleEditItem}
+                onDelete={handleDeleteItem}
+              />
+            )}
+            {activeTab === "categories" && (
+              <CategoriesTab
+                menuItems={menuItems}
+                categories={categories}
+              />
+            )}
+            {activeTab === "pricing" && (
+              <PricingTab
+                menuItems={menuItems}
+                priceStats={priceStats}
+              />
+            )}
+            {activeTab === "analytics" && (
+              <AnalyticsTab
+                menuItems={menuItems}
+                categories={categories}
+              />
+            )}
           </div>
         </div>
       </div>
