@@ -51,9 +51,9 @@ export const NewSaleForm = ({ onBack, onSubmit }: NewSaleFormProps) => {
         id: Date.now().toString(),
         menuItemId: menuItem.id,
         name: menuItem.name,
-        price: menuItem.price,
+        price: menuItem.basePrice,
         quantity: 1,
-        total: menuItem.price
+        total: menuItem.basePrice
       };
       setSaleItems(items => [...items, newSaleItem]);
     }
@@ -153,7 +153,7 @@ export const NewSaleForm = ({ onBack, onSubmit }: NewSaleFormProps) => {
                     <div>
                       <h4 className="font-medium text-sm">{item.name}</h4>
                       <p className="text-xs text-gray-500">{item.category}</p>
-                      <p className="text-sm font-bold text-green-600">${item.price}</p>
+                      <p className="text-sm font-bold text-green-600">${item.basePrice}</p>
                     </div>
                     <Plus className="h-4 w-4 text-gray-400" />
                   </div>

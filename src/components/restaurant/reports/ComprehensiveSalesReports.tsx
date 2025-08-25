@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -196,7 +195,7 @@ export const ComprehensiveSalesReports = () => {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Top Category</CardTitle>
-            <BarChart3 className="h-5 w-5 text-indigo-600" />
+            <BarChart className="h-5 w-5 text-indigo-600" />
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">{summaryStats.topCategory}</div>
