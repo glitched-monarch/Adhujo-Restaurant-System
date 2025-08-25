@@ -17,17 +17,23 @@ export const NewInventoryForm = ({ onBack, onSubmit }: NewInventoryFormProps) =>
   const [formData, setFormData] = useState({
     name: "",
     category: "",
-    supplier: "",
     quantity: "",
     unit: "",
-    costPerUnit: "",
     minStock: "",
-    description: ""
+    cost: "",
+    expiryDate: ""
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const itemData = {
+      ...formData,
+      quantity: parseFloat(formData.quantity),
+      minStock: parseFloat(formData.minStock) || 0,
+      cost: parseFloat(formData.cost) || 0,
+      expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined
+    };
+    onSubmit(itemData);
     toast.success("Inventory item added successfully!");
     onBack();
   };
@@ -54,7 +60,7 @@ export const NewInventoryForm = ({ onBack, onSubmit }: NewInventoryFormProps) =>
       <div className="p-6">
         <Card>
           <CardHeader>
-            <CardTitle>Item Details</CardTitle>
+            <CardTitle>Inventory Item Details</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -79,29 +85,22 @@ export const NewInventoryForm = ({ onBack, onSubmit }: NewInventoryFormProps) =>
                       <SelectItem value="vegetables">Vegetables</SelectItem>
                       <SelectItem value="dairy">Dairy</SelectItem>
                       <SelectItem value="grains">Grains</SelectItem>
-                      <SelectItem value="spices">Spices</SelectItem>
+                      <SelectItem value="oils">Oils & Fats</SelectItem>
+                      <SelectItem value="spices">Spices & Herbs</SelectItem>
                       <SelectItem value="beverages">Beverages</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="supplier">Supplier</Label>
-                <Input
-                  id="supplier"
-                  value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="quantity">Quantity</Label>
                   <Input
                     id="quantity"
                     type="number"
+                    step="0.01"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                     required
@@ -114,46 +113,49 @@ export const NewInventoryForm = ({ onBack, onSubmit }: NewInventoryFormProps) =>
                       <SelectValue placeholder="Select unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="kg">Kg</SelectItem>
-                      <SelectItem value="g">Grams</SelectItem>
-                      <SelectItem value="l">Liters</SelectItem>
-                      <SelectItem value="ml">ML</SelectItem>
+                      <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                      <SelectItem value="g">Grams (g)</SelectItem>
+                      <SelectItem value="l">Liters (l)</SelectItem>
+                      <SelectItem value="ml">Milliliters (ml)</SelectItem>
                       <SelectItem value="pieces">Pieces</SelectItem>
                       <SelectItem value="bottles">Bottles</SelectItem>
+                      <SelectItem value="boxes">Boxes</SelectItem>
+                      <SelectItem value="packets">Packets</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="costPerUnit">Cost per Unit</Label>
+                  <Label htmlFor="minStock">Minimum Stock Level</Label>
                   <Input
-                    id="costPerUnit"
+                    id="minStock"
                     type="number"
                     step="0.01"
-                    value={formData.costPerUnit}
-                    onChange={(e) => setFormData({ ...formData, costPerUnit: e.target.value })}
-                    required
+                    value={formData.minStock}
+                    onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cost">Cost per Unit (KSH)</Label>
+                  <Input
+                    id="cost"
+                    type="number"
+                    step="0.01"
+                    value={formData.cost}
+                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="minStock">Minimum Stock Level</Label>
+                <Label htmlFor="expiryDate">Expiry Date (Optional)</Label>
                 <Input
-                  id="minStock"
-                  type="number"
-                  value={formData.minStock}
-                  onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Optional description"
+                  id="expiryDate"
+                  type="date"
+                  value={formData.expiryDate}
+                  onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
                 />
               </div>
 
@@ -163,7 +165,7 @@ export const NewInventoryForm = ({ onBack, onSubmit }: NewInventoryFormProps) =>
                 </Button>
                 <Button type="submit" className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
-                  Add Item
+                  Add Inventory Item
                 </Button>
               </div>
             </form>

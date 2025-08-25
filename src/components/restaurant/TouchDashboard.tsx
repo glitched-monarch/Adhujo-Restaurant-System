@@ -1,18 +1,24 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useSearchParams } from "react-router-dom";
-import {
-  ShoppingCart,
-  Package,
-  Receipt,
-  BarChart3,
-  Users,
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { 
+  ShoppingCart, 
+  Package, 
+  ChefHat, 
+  DollarSign, 
+  TrendingUp, 
+  AlertTriangle, 
+  Users, 
+  FileText, 
   Settings,
-  ChefHat,
-  Calendar,
-  User,
-  LogOut
+  UserCheck,
+  LogOut,
+  History,
+  CreditCard,
+  BarChart3
 } from "lucide-react";
 
 interface TouchDashboardProps {
@@ -21,237 +27,300 @@ interface TouchDashboardProps {
 
 export const TouchDashboard = ({ userRole }: TouchDashboardProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const handleSectionClick = (section: string) => {
-    setSearchParams({ tab: section });
-  };
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    window.location.href = "/login";
+    navigate("/login");
   };
 
-  // Get current date and time
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  const timeStr = now.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    second: '2-digit' 
-  });
+  const handleCardClick = (tab: string) => {
+    setSearchParams({ tab });
+  };
 
-  // Quick stats (mock data)
-  const quickStats = [
-    {
-      title: "Today's Sales",
-      value: "$4,750",
-      icon: ShoppingCart,
-      color: "bg-green-500",
-      textColor: "text-white"
+  const stats = [
+    { title: "Today's Sales", value: "KSH 12,450", change: "+12%", icon: DollarSign, color: "text-green-600" },
+    { title: "Orders", value: "89", change: "+5%", icon: ShoppingCart, color: "text-blue-600" },
+    { title: "Revenue", value: "KSH 45,230", change: "+8%", icon: TrendingUp, color: "text-purple-600" },
+    { title: "Active Items", value: "127", change: "0%", icon: ChefHat, color: "text-orange-600" }
+  ];
+
+  const recentSales = [
+    { id: "1", customer: "John Doe", amount: "KSH 450", time: "2 min ago", items: "Grilled Chicken, Salad" },
+    { id: "2", customer: "Jane Smith", amount: "KSH 320", time: "5 min ago", items: "Pasta, Drink" },
+    { id: "3", customer: "Mike Johnson", amount: "KSH 280", time: "8 min ago", items: "Burger, Fries" },
+  ];
+
+  const lowStockItems = [
+    { name: "Tomatoes", current: "5 kg", minimum: "10 kg", status: "critical" },
+    { name: "Chicken Breast", current: "15 kg", minimum: "20 kg", status: "low" },
+    { name: "Olive Oil", current: "3 bottles", minimum: "5 bottles", status: "low" }
+  ];
+
+  const activeStaff = [
+    { id: "1", name: "Alice Johnson", role: "Chef", avatar: "", status: "active", shift: "Morning" },
+    { id: "2", name: "Bob Smith", role: "Waiter", avatar: "", status: "active", shift: "Morning" },
+    { id: "3", name: "Carol Davis", role: "Manager", avatar: "", status: "break", shift: "Morning" },
+    { id: "4", name: "David Wilson", role: "Chef", avatar: "", status: "active", shift: "Morning" }
+  ];
+
+  const quickActions = [
+    { 
+      title: "New Sale", 
+      description: "Process a new order", 
+      icon: ShoppingCart, 
+      color: "bg-green-100 text-green-700 hover:bg-green-200",
+      tab: "sales"
     },
-    {
-      title: "Orders",
-      value: "142",
-      icon: Receipt,
-      color: "bg-blue-500",
-      textColor: "text-white"
+    { 
+      title: "Inventory", 
+      description: "Manage stock levels", 
+      icon: Package, 
+      color: "bg-blue-100 text-blue-700 hover:bg-blue-200",
+      tab: "inventory"
     },
-    {
-      title: "Active Tables",
-      value: "8",
-      icon: User,
-      color: "bg-purple-500",
-      textColor: "text-white"
+    { 
+      title: "Menu Items", 
+      description: "Update menu", 
+      icon: ChefHat, 
+      color: "bg-orange-100 text-orange-700 hover:bg-orange-200",
+      tab: "menu",
+      roles: ["admin", "manager"]
     },
-    {
-      title: "Staff Online",
-      value: "12",
-      icon: Users,
-      color: "bg-red-500",
-      textColor: "text-white"
+    { 
+      title: "Reports", 
+      description: "View analytics", 
+      icon: BarChart3, 
+      color: "bg-purple-100 text-purple-700 hover:bg-purple-200",
+      tab: "reports",
+      roles: ["admin", "manager"]
     }
   ];
 
-  // Main sections
-  const mainSections = [
-    {
-      id: 'sales',
-      title: 'Sales',
-      description: 'Process orders and manage transactions',
-      detail: '24 orders today',
-      icon: ShoppingCart,
-      color: 'bg-green-500',
-      access: ['admin', 'manager', 'staff']
+  const adminActions = [
+    { 
+      title: "User Management", 
+      description: "Manage staff accounts", 
+      icon: Users, 
+      color: "bg-indigo-100 text-indigo-700 hover:bg-indigo-200",
+      tab: "users"
     },
-    {
-      id: 'inventory',
-      title: 'Inventory',
-      description: 'Track stock levels and ingredients',
-      detail: '15 low stock items',
-      icon: Package,
-      color: 'bg-blue-500',
-      access: ['admin', 'manager', 'staff']
+    { 
+      title: "Access Logs", 
+      description: "System activity", 
+      icon: History, 
+      color: "bg-gray-100 text-gray-700 hover:bg-gray-200",
+      tab: "logs"
     },
-    {
-      id: 'menu',
-      title: 'Menu',
-      description: 'Manage dishes and pricing',
-      detail: '45 active items',
-      icon: ChefHat,
-      color: 'bg-purple-500',
-      access: ['admin', 'manager']
+    { 
+      title: "Expenses", 
+      description: "Track expenses", 
+      icon: CreditCard, 
+      color: "bg-red-100 text-red-700 hover:bg-red-200",
+      tab: "expenses"
     },
-    {
-      id: 'users',
-      title: 'Users',
-      description: 'Staff and customer management',
-      detail: '12 active staff',
-      icon: Users,
-      color: 'bg-orange-500',
-      access: ['admin']
-    },
-    {
-      id: 'expenses',
-      title: 'Expenses',
-      description: 'Track costs and expenditures',
-      detail: '$2,450 this week',
-      icon: Receipt,
-      color: 'bg-pink-500',
-      access: ['admin', 'manager']
-    },
-    {
-      id: 'reports',
-      title: 'Reports',
-      description: 'Analytics and insights',
-      detail: 'View analytics',
-      icon: BarChart3,
-      color: 'bg-indigo-500',
-      access: ['admin', 'manager']
+    { 
+      title: "Settings", 
+      description: "System configuration", 
+      icon: Settings, 
+      color: "bg-slate-100 text-slate-700 hover:bg-slate-200",
+      tab: "settings"
     }
   ];
-
-  const canAccess = (section: { access: string[] }) => {
-    return section.access.includes(userRole);
-  };
-
-  const accessibleSections = mainSections.filter(canAccess);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold text-foreground">Adhujo Restaurant</h1>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600 font-medium">Online</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Restaurant Dashboard</h1>
+          <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm text-gray-600">Logged in as</p>
+            <p className="font-medium capitalize">{userRole}</p>
           </div>
-        </div>
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-foreground mb-1">Welcome back!</h2>
-          <p className="text-sm text-muted-foreground">
-            {dateStr} • {timeStr}
-          </p>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {quickStats.map((stat, index) => (
-          <Card key={index} className={`${stat.color} border-0 shadow-md`}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={`text-sm ${stat.textColor} opacity-90`}>{stat.title}</p>
-                  <p className={`text-2xl font-bold ${stat.textColor}`}>{stat.value}</p>
-                </div>
-                <stat.icon className={`h-8 w-8 ${stat.textColor} opacity-80`} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Main Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {accessibleSections.map((section) => (
-          <Card 
-            key={section.id}
-            className="hover:shadow-lg transition-all duration-200 cursor-pointer border-0 bg-white"
-            onClick={() => handleSectionClick(section.id)}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleLogout}
+            className="flex items-center gap-2"
           >
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className={`w-12 h-12 ${section.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                  <section.icon className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-foreground mb-1">{section.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{section.description}</p>
-                  <p className="text-sm text-muted-foreground font-medium">{section.detail}</p>
-                </div>
-              </div>
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat, index) => (
+          <Card key={index} className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className={`h-5 w-5 ${stat.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-gray-600">
+                <span className="text-green-600">{stat.change}</span> from yesterday
+              </p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Admin Settings (if admin) */}
-      {userRole === 'admin' && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Administration</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card 
-              className="hover:shadow-lg transition-all duration-200 cursor-pointer border-0 bg-white"
-              onClick={() => handleSectionClick('logs')}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gray-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Settings className="h-6 w-6 text-white" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Quick Actions */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Common tasks and operations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              {quickActions
+                .filter(action => !action.roles || action.roles.includes(userRole))
+                .map((action, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className={`h-24 flex flex-col items-center justify-center space-y-2 ${action.color}`}
+                  onClick={() => handleCardClick(action.tab)}
+                >
+                  <action.icon className="h-8 w-8" />
+                  <div className="text-center">
+                    <div className="font-medium">{action.title}</div>
+                    <div className="text-xs opacity-75">{action.description}</div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-foreground mb-1">Access Logs</h3>
-                    <p className="text-sm text-muted-foreground mb-2">System access logs</p>
-                    <p className="text-sm text-muted-foreground font-medium">Monitor activity</p>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Staff Active */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Staff Active
+            </CardTitle>
+            <CardDescription>Currently at work</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {activeStaff.map((staff) => (
+                <div key={staff.id} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={staff.avatar} />
+                      <AvatarFallback>{staff.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{staff.name}</p>
+                      <p className="text-xs text-gray-500">{staff.role}</p>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant={staff.status === 'active' ? 'default' : 'secondary'}
+                    className="text-xs"
+                  >
+                    {staff.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Recent Sales */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Sales</CardTitle>
+            <CardDescription>Latest transactions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentSales.map((sale) => (
+                <div key={sale.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{sale.customer}</p>
+                    <p className="text-xs text-gray-500">{sale.items}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{sale.amount}</p>
+                    <p className="text-xs text-gray-500">{sale.time}</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-            <Card 
-              className="hover:shadow-lg transition-all duration-200 cursor-pointer border-0 bg-white"
-              onClick={() => handleSectionClick('settings')}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Settings className="h-6 w-6 text-white" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Low Stock Alert */}
+        <Card className="border-orange-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-800">
+              <AlertTriangle className="h-5 w-5" />
+              Low Stock Alert
+            </CardTitle>
+            <CardDescription>Items running low</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {lowStockItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{item.name}</p>
+                    <p className="text-xs text-gray-500">Min: {item.minimum}</p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-foreground mb-1">Settings</h3>
-                    <p className="text-sm text-muted-foreground mb-2">System configuration</p>
-                    <p className="text-sm text-muted-foreground font-medium">Configure system</p>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{item.current}</p>
+                    <Badge 
+                      variant={item.status === 'critical' ? 'destructive' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {item.status}
+                    </Badge>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Admin Actions */}
+      {userRole === "admin" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Administrative Functions</CardTitle>
+            <CardDescription>System management and configuration</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {adminActions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className={`h-24 flex flex-col items-center justify-center space-y-2 ${action.color}`}
+                  onClick={() => handleCardClick(action.tab)}
+                >
+                  <action.icon className="h-8 w-8" />
+                  <div className="text-center">
+                    <div className="font-medium">{action.title}</div>
+                    <div className="text-xs opacity-75">{action.description}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
