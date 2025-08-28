@@ -6,25 +6,31 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Download, TrendingUp, DollarSign, Package, Users } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarIcon, Download, TrendingUp, DollarSign, Package, Users, ArrowLeft, TrendingDown, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useSales } from "@/hooks/useSales";
 import { useInventory } from "@/hooks/useInventory";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
 
 export const ReportsOverview = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date()
   });
-  const [reportType, setReportType] = useState("comprehensive");
   
   const { sales } = useSales();
   const { inventory } = useInventory();
   const { expenses } = useExpenses();
   const { toast } = useToast();
+
+  const handleBack = () => {
+    setSearchParams({});
+  };
 
   // Filter data by date range
   const filteredSales = sales.filter(sale => {
@@ -105,12 +111,37 @@ export const ReportsOverview = () => {
     }
   ];
 
+  // Demo expense breakdown data
+  const expenseBreakdown = [
+    { category: "Food & Ingredients", amount: 45000, percentage: 35, trend: "+5%" },
+    { category: "Staff Salaries", amount: 38000, percentage: 30, trend: "+2%" },
+    { category: "Utilities", amount: 15200, percentage: 12, trend: "-3%" },
+    { category: "Rent", amount: 20000, percentage: 15, trend: "0%" },
+    { category: "Equipment", amount: 8500, percentage: 7, trend: "+12%" },
+    { category: "Marketing", amount: 3300, percentage: 3, trend: "+8%" }
+  ];
+
+  const salesAnalytics = {
+    totalOrders: filteredSales.length,
+    averageOrderValue: filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0,
+    peakHours: "12:00 PM - 2:00 PM",
+    popularPaymentMethod: "Cash",
+    customerSatisfaction: 4.2,
+    repeatCustomers: 65
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+          </div>
           <Button onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export Report
@@ -162,21 +193,6 @@ export const ReportsOverview = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Report Type</label>
-                <Select value={reportType} onValueChange={setReportType}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="comprehensive">Comprehensive</SelectItem>
-                    <SelectItem value="sales">Sales Only</SelectItem>
-                    <SelectItem value="expenses">Expenses Only</SelectItem>
-                    <SelectItem value="inventory">Inventory Only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -199,94 +215,317 @@ export const ReportsOverview = () => {
           ))}
         </div>
 
-        {/* Sales Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Sales Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{filteredSales.length}</p>
-                <p className="text-sm text-gray-600">Total Sales</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">
-                  KSH {filteredSales.length > 0 ? Math.round(totalRevenue / filteredSales.length).toLocaleString() : 0}
-                </p>
-                <p className="text-sm text-gray-600">Average Sale</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">
-                  {filteredSales.reduce((sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0)}
-                </p>
-                <p className="text-sm text-gray-600">Items Sold</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Report Tabs */}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="sales">Sales Reports</TabsTrigger>
+            <TabsTrigger value="expenses">Expense Reports</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
 
-        {/* Top Selling Items */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Selling Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {(() => {
-                const itemSales = filteredSales.reduce((acc, sale) => {
-                  sale.items.forEach(item => {
-                    if (!acc[item.name]) {
-                      acc[item.name] = { quantity: 0, revenue: 0 };
-                    }
-                    acc[item.name].quantity += item.quantity;
-                    acc[item.name].revenue += item.totalPrice * item.quantity;
-                  });
-                  return acc;
-                }, {} as Record<string, { quantity: number; revenue: number }>);
+          <TabsContent value="overview" className="space-y-6">
+            {/* Sales Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Sales Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-600">{filteredSales.length}</p>
+                    <p className="text-sm text-gray-600">Total Sales</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-blue-600">
+                      KSH {filteredSales.length > 0 ? Math.round(totalRevenue / filteredSales.length).toLocaleString() : 0}
+                    </p>
+                    <p className="text-sm text-gray-600">Average Sale</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-purple-600">
+                      {filteredSales.reduce((sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0)}
+                    </p>
+                    <p className="text-sm text-gray-600">Items Sold</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                return Object.entries(itemSales)
-                  .sort(([,a], [,b]) => b.quantity - a.quantity)
-                  .slice(0, 5)
-                  .map(([name, data]) => (
-                    <div key={name} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                      <div>
-                        <p className="font-medium">{name}</p>
-                        <p className="text-sm text-gray-600">{data.quantity} units sold</p>
+            {/* Top Selling Items */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Selling Items</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {(() => {
+                    const itemSales = filteredSales.reduce((acc, sale) => {
+                      sale.items.forEach(item => {
+                        if (!acc[item.name]) {
+                          acc[item.name] = { quantity: 0, revenue: 0 };
+                        }
+                        acc[item.name].quantity += item.quantity;
+                        acc[item.name].revenue += item.totalPrice * item.quantity;
+                      });
+                      return acc;
+                    }, {} as Record<string, { quantity: number; revenue: number }>);
+
+                    return Object.entries(itemSales)
+                      .sort(([,a], [,b]) => b.quantity - a.quantity)
+                      .slice(0, 5)
+                      .map(([name, data]) => (
+                        <div key={name} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                          <div>
+                            <p className="font-medium">{name}</p>
+                            <p className="text-sm text-gray-600">{data.quantity} units sold</p>
+                          </div>
+                          <p className="font-bold text-green-600">KSH {data.revenue.toLocaleString()}</p>
+                        </div>
+                      ));
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="sales" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sales Performance</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Daily Average</span>
+                      <span className="font-bold">KSH {Math.round(totalRevenue / 30).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Best Day</span>
+                      <span className="font-bold text-green-600">KSH 15,450</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Growth Rate</span>
+                      <span className="font-bold text-green-600">+12.5%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Peak Hours</span>
+                      <span className="font-bold">12:00 - 14:00</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Methods</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span>Cash</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div className="bg-green-600 h-2 rounded-full" style={{ width: '65%' }}></div>
+                        </div>
+                        <span className="text-sm">65%</span>
                       </div>
-                      <p className="font-bold text-green-600">KSH {data.revenue.toLocaleString()}</p>
                     </div>
-                  ));
-              })()}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Expense Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Expense Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {(() => {
-                const expensesByCategory = filteredExpenses.reduce((acc, expense) => {
-                  acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-                  return acc;
-                }, {} as Record<string, number>);
-
-                return Object.entries(expensesByCategory)
-                  .sort(([,a], [,b]) => b - a)
-                  .map(([category, amount]) => (
-                    <div key={category} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                      <p className="font-medium">{category}</p>
-                      <p className="font-bold text-red-600">KSH {amount.toLocaleString()}</p>
+                    <div className="flex justify-between items-center">
+                      <span>M-Pesa</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: '30%' }}></div>
+                        </div>
+                        <span className="text-sm">30%</span>
+                      </div>
                     </div>
-                  ));
-              })()}
+                    <div className="flex justify-between items-center">
+                      <span>Card</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div className="bg-purple-600 h-2 rounded-full" style={{ width: '5%' }}></div>
+                        </div>
+                        <span className="text-sm">5%</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+
+          <TabsContent value="expenses" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Expense Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {expenseBreakdown.map((expense, index) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                        <div>
+                          <p className="font-medium">{expense.category}</p>
+                          <p className="text-sm text-gray-600">{expense.percentage}% of total</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-red-600">KSH {expense.amount.toLocaleString()}</p>
+                          <p className={`text-sm ${expense.trend.startsWith('+') ? 'text-red-500' : expense.trend.startsWith('-') ? 'text-green-500' : 'text-gray-500'}`}>
+                            {expense.trend}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Expense Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>This Month</span>
+                      <span className="font-bold text-red-600">KSH {totalExpenses.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Last Month</span>
+                      <span className="font-bold">KSH 118,450</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Average Monthly</span>
+                      <span className="font-bold">KSH 125,200</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Variance</span>
+                      <span className="font-bold text-green-600">-5.4%</span>
+                    </div>
+                    <div className="mt-4 p-3 bg-yellow-50 rounded">
+                      <p className="text-sm text-yellow-800">
+                        <AlertTriangle className="h-4 w-4 inline mr-1" />
+                        Food costs are 8% above budget this month
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Analytics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Total Orders</span>
+                      <span className="font-bold">{salesAnalytics.totalOrders}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Avg Order Value</span>
+                      <span className="font-bold">KSH {Math.round(salesAnalytics.averageOrderValue).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Peak Hours</span>
+                      <span className="font-bold">{salesAnalytics.peakHours}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Repeat Customers</span>
+                      <span className="font-bold text-green-600">{salesAnalytics.repeatCustomers}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Metrics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Revenue Growth</span>
+                      <span className="font-bold text-green-600">+12.5%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Profit Margin</span>
+                      <span className="font-bold">{totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Cost Control</span>
+                      <span className="font-bold text-yellow-600">Fair</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Efficiency Score</span>
+                      <span className="font-bold text-green-600">85/100</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Inventory Insights</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Total Items</span>
+                      <span className="font-bold">{inventory.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Low Stock Items</span>
+                      <span className="font-bold text-yellow-600">{lowStockItems}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Inventory Value</span>
+                      <span className="font-bold">KSH {totalInventoryValue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Turnover Rate</span>
+                      <span className="font-bold text-green-600">Good</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recommendations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 rounded border-l-4 border-blue-400">
+                    <p className="text-sm text-blue-800">
+                      <TrendingUp className="h-4 w-4 inline mr-1" />
+                      Consider promoting high-margin items during peak hours to increase profitability.
+                    </p>
+                  </div>
+                  <div className="p-3 bg-yellow-50 rounded border-l-4 border-yellow-400">
+                    <p className="text-sm text-yellow-800">
+                      <AlertTriangle className="h-4 w-4 inline mr-1" />
+                      Food costs are above average. Review supplier contracts and portion sizes.
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded border-l-4 border-green-400">
+                    <p className="text-sm text-green-800">
+                      <TrendingUp className="h-4 w-4 inline mr-1" />
+                      Strong repeat customer rate. Consider implementing a loyalty program.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
