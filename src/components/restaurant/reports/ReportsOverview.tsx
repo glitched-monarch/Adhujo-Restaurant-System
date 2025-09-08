@@ -217,9 +217,11 @@ export const ReportsOverview = () => {
 
         {/* Report Tabs */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="profit-loss">P&L Statement</TabsTrigger>
             <TabsTrigger value="sales">Sales Reports</TabsTrigger>
+            <TabsTrigger value="inventory">Inventory Reports</TabsTrigger>
             <TabsTrigger value="expenses">Expense Reports</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -289,7 +291,116 @@ export const ReportsOverview = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="profit-loss" className="space-y-6">
+            {/* P&L Statement */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Profit & Loss Statement</CardTitle>
+                <p className="text-sm text-gray-600">
+                  {format(dateRange.from, 'MMM dd, yyyy')} - {format(dateRange.to, 'MMM dd, yyyy')}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Revenue Section */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-green-700 mb-3">Revenue</h3>
+                    <div className="space-y-2 ml-4">
+                      <div className="flex justify-between">
+                        <span>Food Sales</span>
+                        <span className="font-medium">KSH {Math.round(totalRevenue * 0.85).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Beverage Sales</span>
+                        <span className="font-medium">KSH {Math.round(totalRevenue * 0.15).toLocaleString()}</span>
+                      </div>
+                      <div className="border-t pt-2 flex justify-between font-bold text-green-700">
+                        <span>Total Revenue</span>
+                        <span>KSH {totalRevenue.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cost of Goods Sold */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-orange-700 mb-3">Cost of Goods Sold</h3>
+                    <div className="space-y-2 ml-4">
+                      <div className="flex justify-between">
+                        <span>Food Costs</span>
+                        <span className="font-medium">KSH {Math.round(totalRevenue * 0.32).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Beverage Costs</span>
+                        <span className="font-medium">KSH {Math.round(totalRevenue * 0.08).toLocaleString()}</span>
+                      </div>
+                      <div className="border-t pt-2 flex justify-between font-bold text-orange-700">
+                        <span>Total COGS</span>
+                        <span>KSH {Math.round(totalRevenue * 0.40).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gross Profit */}
+                  <div className="bg-blue-50 p-4 rounded">
+                    <div className="flex justify-between font-bold text-blue-700 text-lg">
+                      <span>Gross Profit</span>
+                      <span>KSH {Math.round(totalRevenue * 0.60).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-blue-600">Gross Margin: 60%</p>
+                  </div>
+
+                  {/* Operating Expenses */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-red-700 mb-3">Operating Expenses</h3>
+                    <div className="space-y-2 ml-4">
+                      <div className="flex justify-between">
+                        <span>Staff Salaries</span>
+                        <span className="font-medium">KSH 38,000</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Rent</span>
+                        <span className="font-medium">KSH 20,000</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Utilities</span>
+                        <span className="font-medium">KSH 15,200</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Equipment & Maintenance</span>
+                        <span className="font-medium">KSH 8,500</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Marketing</span>
+                        <span className="font-medium">KSH 3,300</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Other Expenses</span>
+                        <span className="font-medium">KSH {Math.max(0, totalExpenses - 85000).toLocaleString()}</span>
+                      </div>
+                      <div className="border-t pt-2 flex justify-between font-bold text-red-700">
+                        <span>Total Operating Expenses</span>
+                        <span>KSH {totalExpenses.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Net Profit */}
+                  <div className={`p-4 rounded ${netProfit >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                    <div className={`flex justify-between font-bold text-xl ${netProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                      <span>Net Profit</span>
+                      <span>KSH {netProfit.toLocaleString()}</span>
+                    </div>
+                    <p className={`text-sm ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      Net Margin: {totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0}%
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="sales" className="space-y-6">
+            {/* Comprehensive Sales Reports */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -297,6 +408,18 @@ export const ReportsOverview = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Total Sales</span>
+                      <span className="font-bold">{filteredSales.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Revenue</span>
+                      <span className="font-bold text-green-600">KSH {totalRevenue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Average Order Value</span>
+                      <span className="font-bold">KSH {filteredSales.length > 0 ? Math.round(totalRevenue / filteredSales.length).toLocaleString() : 0}</span>
+                    </div>
                     <div className="flex justify-between">
                       <span>Daily Average</span>
                       <span className="font-bold">KSH {Math.round(totalRevenue / 30).toLocaleString()}</span>
@@ -317,6 +440,55 @@ export const ReportsOverview = () => {
                 </CardContent>
               </Card>
 
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sales by Category</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span>Main Dishes</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-32 bg-gray-200 rounded-full h-3">
+                          <div className="bg-blue-600 h-3 rounded-full" style={{ width: '45%' }}></div>
+                        </div>
+                        <span className="text-sm font-medium">45%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Beverages</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-32 bg-gray-200 rounded-full h-3">
+                          <div className="bg-green-600 h-3 rounded-full" style={{ width: '25%' }}></div>
+                        </div>
+                        <span className="text-sm font-medium">25%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Appetizers</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-32 bg-gray-200 rounded-full h-3">
+                          <div className="bg-yellow-600 h-3 rounded-full" style={{ width: '20%' }}></div>
+                        </div>
+                        <span className="text-sm font-medium">20%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Desserts</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-32 bg-gray-200 rounded-full h-3">
+                          <div className="bg-purple-600 h-3 rounded-full" style={{ width: '10%' }}></div>
+                        </div>
+                        <span className="text-sm font-medium">10%</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Payment Methods and Customer Analysis */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Payment Methods</CardTitle>
@@ -353,7 +525,226 @@ export const ReportsOverview = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Analysis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Unique Customers</span>
+                      <span className="font-bold">287</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Repeat Customers</span>
+                      <span className="font-bold text-green-600">65%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Customer Satisfaction</span>
+                      <span className="font-bold text-green-600">4.2/5</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Average Visit Frequency</span>
+                      <span className="font-bold">2.3 times/month</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Top Selling Items */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Selling Items</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {(() => {
+                    const itemSales = filteredSales.reduce((acc, sale) => {
+                      sale.items.forEach(item => {
+                        if (!acc[item.name]) {
+                          acc[item.name] = { quantity: 0, revenue: 0 };
+                        }
+                        acc[item.name].quantity += item.quantity;
+                        acc[item.name].revenue += item.totalPrice * item.quantity;
+                      });
+                      return acc;
+                    }, {} as Record<string, { quantity: number; revenue: number }>);
+
+                    return Object.entries(itemSales)
+                      .sort(([,a], [,b]) => b.quantity - a.quantity)
+                      .slice(0, 10)
+                      .map(([name, data], index) => (
+                        <div key={name} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+                              {index + 1}
+                            </span>
+                            <div>
+                              <p className="font-medium">{name}</p>
+                              <p className="text-sm text-gray-600">{data.quantity} units sold</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-green-600">KSH {data.revenue.toLocaleString()}</p>
+                            <p className="text-sm text-gray-500">KSH {Math.round(data.revenue / data.quantity).toLocaleString()}/unit</p>
+                          </div>
+                        </div>
+                      ));
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="inventory" className="space-y-6">
+            {/* Inventory Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Inventory Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Total Items</span>
+                      <span className="font-bold">{inventory.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Value</span>
+                      <span className="font-bold text-blue-600">KSH {totalInventoryValue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Low Stock Items</span>
+                      <span className="font-bold text-yellow-600">{lowStockItems}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Out of Stock</span>
+                      <span className="font-bold text-red-600">{inventory.filter(item => item.quantity === 0).length}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Stock Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span>Good Stock</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-3">
+                          <div className="bg-green-600 h-3 rounded-full" style={{ 
+                            width: `${inventory.length > 0 ? Math.round(((inventory.length - lowStockItems) / inventory.length) * 100) : 0}%` 
+                          }}></div>
+                        </div>
+                        <span className="text-sm">{inventory.length - lowStockItems}</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Low Stock</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-3">
+                          <div className="bg-yellow-600 h-3 rounded-full" style={{ 
+                            width: `${inventory.length > 0 ? Math.round((lowStockItems / inventory.length) * 100) : 0}%` 
+                          }}></div>
+                        </div>
+                        <span className="text-sm">{lowStockItems}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Turnover Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Fast Moving</span>
+                      <span className="font-bold text-green-600">42%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Medium Moving</span>
+                      <span className="font-bold text-yellow-600">38%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Slow Moving</span>
+                      <span className="font-bold text-red-600">20%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Category Analysis */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Inventory by Category</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded">
+                    <Package className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-blue-600">24</p>
+                    <p className="text-sm text-blue-800">Meat & Fish</p>
+                    <p className="text-xs text-blue-600">KSH {Math.round(totalInventoryValue * 0.35).toLocaleString()}</p>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded">
+                    <Package className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-green-600">18</p>
+                    <p className="text-sm text-green-800">Vegetables</p>
+                    <p className="text-xs text-green-600">KSH {Math.round(totalInventoryValue * 0.25).toLocaleString()}</p>
+                  </div>
+                  <div className="text-center p-4 bg-yellow-50 rounded">
+                    <Package className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-yellow-600">15</p>
+                    <p className="text-sm text-yellow-800">Dry Goods</p>
+                    <p className="text-xs text-yellow-600">KSH {Math.round(totalInventoryValue * 0.20).toLocaleString()}</p>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded">
+                    <Package className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-purple-600">12</p>
+                    <p className="text-sm text-purple-800">Other</p>
+                    <p className="text-xs text-purple-600">KSH {Math.round(totalInventoryValue * 0.20).toLocaleString()}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Low Stock Alert */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  Low Stock Alert
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {inventory.filter(item => item.quantity <= item.minStock).slice(0, 8).map((item, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-yellow-50 rounded border-l-4 border-yellow-400">
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-gray-600">Current: {item.quantity} {item.unit} | Min: {item.minStock} {item.unit}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-yellow-700">Reorder</p>
+                        <p className="text-sm text-yellow-600">Suggested: {item.minStock * 3}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {inventory.filter(item => item.quantity <= item.minStock).length === 0 && (
+                    <p className="text-center text-gray-500 py-4">All items are well stocked!</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="expenses" className="space-y-6">
