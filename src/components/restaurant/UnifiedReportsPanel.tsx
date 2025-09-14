@@ -5,7 +5,11 @@ import { ArrowLeft } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { ReportsOverview } from "./reports/ReportsOverview";
 
-export const UnifiedReportsPanel = () => {
+interface UnifiedReportsPanelProps {
+  userRole?: "admin" | "manager" | "staff";
+}
+
+export const UnifiedReportsPanel = ({ userRole = "admin" }: UnifiedReportsPanelProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const handleBack = () => {
@@ -14,7 +18,7 @@ export const UnifiedReportsPanel = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ReportsOverview />
+      <ReportsOverview userRole={userRole} />
     </div>
   );
 };

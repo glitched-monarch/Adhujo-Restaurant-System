@@ -33,27 +33,33 @@ const LoginPage = () => {
     }
 
     try {
-      // Mock login - replace with actual API call
-      console.log("Login data:", { username, password, rememberMe });
+      // Authenticate against users table in Supabase
+      const { supabase } = await import("@/integrations/supabase/client");
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, accept any non-empty credentials
-      if (username.trim() && password.trim()) {
-        toast({
-          title: "Login Successful",
-          description: "Welcome to Adhujo Restaurant System",
-        });
-        
-        // Store login state (in real app, store JWT token)
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userRole", "admin"); // Default to admin for demo
-        
-        navigate("/dashboard");
-      } else {
-        setError("Invalid credentials. Please try again.");
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username.trim())
+        .eq('password', password.trim()) // In production, use proper password hashing
+        .single();
+
+      if (error || !user) {
+        setError("Invalid username or password. Please try again.");
+        return;
       }
+
+      toast({
+        title: "Login Successful",
+        description: `Welcome to Adhujo Restaurant System, ${user.username}`,
+      });
+      
+      // Store login state and user info
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userRole", user.role);
+      localStorage.setItem("userId", user.id.toString());
+      localStorage.setItem("username", user.username);
+      
+      navigate("/dashboard");
     } catch (err) {
       setError("Login failed. Please check your connection and try again.");
     } finally {
@@ -172,7 +178,7 @@ const LoginPage = () => {
             {/* Demo Credentials */}
             <div className="mt-6 p-4 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground text-center">
-                <strong>Demo Mode:</strong> Enter any username and password to continue
+                <strong>Demo:</strong> Use credentials from the users table in the database
               </p>
             </div>
           </CardContent>

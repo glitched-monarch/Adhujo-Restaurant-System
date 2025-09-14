@@ -16,7 +16,11 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
 
-export const ReportsOverview = () => {
+interface ReportsOverviewProps {
+  userRole?: "admin" | "manager" | "staff";
+}
+
+export const ReportsOverview = ({ userRole = "admin" }: ReportsOverviewProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -217,13 +221,13 @@ export const ReportsOverview = () => {
 
         {/* Report Tabs */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className={`grid w-full ${userRole === 'staff' ? 'grid-cols-3' : 'grid-cols-6'}`}>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="profit-loss">P&L Statement</TabsTrigger>
             <TabsTrigger value="sales">Sales Reports</TabsTrigger>
             <TabsTrigger value="inventory">Inventory Reports</TabsTrigger>
-            <TabsTrigger value="expenses">Expense Reports</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            {userRole !== 'staff' && <TabsTrigger value="profit-loss">P&L Statement</TabsTrigger>}
+            {userRole !== 'staff' && <TabsTrigger value="expenses">Expense Reports</TabsTrigger>}
+            {userRole !== 'staff' && <TabsTrigger value="analytics">Analytics</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">

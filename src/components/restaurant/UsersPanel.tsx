@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,8 @@ export const UsersPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [excusalForm, setExcusalForm] = useState({
     staffId: "",
     date: "",
@@ -26,40 +29,39 @@ export const UsersPanel = () => {
     setSearchParams({});
   };
 
-  const users = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@restaurant.com",
-      role: "admin",
-      status: "active",
-      lastLogin: "2024-01-15 09:30 AM",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane@restaurant.com",
-      role: "manager",
-      status: "active",
-      lastLogin: "2024-01-14 05:20 PM",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike@restaurant.com",
-      role: "staff",
-      status: "inactive",
-      lastLogin: "2024-01-10 11:15 AM",
-    },
-    {
-      id: 4,
-      name: "Sarah Wilson",
-      email: "sarah@restaurant.com",
-      role: "manager",
-      status: "active",
-      lastLogin: "2024-01-15 08:45 AM",
-    },
-  ];
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        return;
+      }
+
+      // Transform data to match expected format
+      const transformedUsers = data.map(user => ({
+        id: user.id,
+        name: user.username, // Using username as name since no name field exists
+        email: `${user.username}@restaurant.com`, // Mock email
+        role: user.role,
+        status: "active", // Default status
+        lastLogin: "Recently", // Mock last login
+      }));
+
+      setUsers(transformedUsers);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const attendanceRecords = [
     {
@@ -125,6 +127,17 @@ export const UsersPanel = () => {
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p>Loading users...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmitExcusal = () => {
     if (excusalForm.staffId && excusalForm.date && excusalForm.reason) {

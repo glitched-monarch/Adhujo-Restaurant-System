@@ -87,10 +87,10 @@ export const AppSidebar = ({ userRole, onLogout }: AppSidebarProps) => {
     },
     { 
       id: 'reports', 
-      label: 'Reports & Financials', 
+      label: 'Reports', 
       icon: BarChart3, 
-      description: 'Business analytics and financial insights',
-      access: ['admin', 'manager'] 
+      description: 'Business analytics and reports',
+      access: ['admin', 'manager', 'staff'] // Staff can only view basic reports
     }
   ];
 

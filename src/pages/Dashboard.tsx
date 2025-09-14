@@ -13,9 +13,17 @@ import { SystemSettingsPanel } from "@/components/restaurant/SystemSettingsPanel
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [userRole, setUserRole] = useState<"admin" | "manager" | "staff">("admin"); // Mock user role
+  const [userRole, setUserRole] = useState<"admin" | "manager" | "staff">("admin");
   
   const activeTab = searchParams.get('tab');
+
+  useEffect(() => {
+    // Get user role from localStorage
+    const storedRole = localStorage.getItem("userRole") as "admin" | "manager" | "staff" | null;
+    if (storedRole) {
+      setUserRole(storedRole);
+    }
+  }, []);
 
   const handleLogout = () => {
     window.location.href = "/login";
@@ -43,7 +51,7 @@ const Dashboard = () => {
       case 'expenses':
         return canAccessExpenses ? <ModernExpensePanel /> : <div>Access Denied</div>;
       case 'reports':
-        return canAccessReports ? <UnifiedReportsPanel /> : <div>Access Denied</div>;
+        return <UnifiedReportsPanel userRole={userRole} />;
       case 'users':
         return canAccessUsers ? <UsersPanel /> : <div>Access Denied</div>;
       case 'logs':
