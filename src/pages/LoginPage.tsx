@@ -174,13 +174,6 @@ const LoginPage = () => {
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground text-center">
-                <strong>Demo:</strong> Use credentials from the users table in the database
-              </p>
-            </div>
           </CardContent>
         </Card>
 
