@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,12 @@ export const UsersPanel = () => {
     date: "",
     reason: "",
     approved: false
+  });
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUser, setNewUser] = useState({
+    username: "",
+    password: "",
+    role: "staff"
   });
 
   const handleBack = () => {
@@ -146,6 +152,36 @@ export const UsersPanel = () => {
     }
   };
 
+  const handleAddUser = async () => {
+    if (!newUser.username.trim() || !newUser.password.trim()) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .insert([{
+          username: newUser.username.trim(),
+          password: newUser.password.trim(),
+          role: newUser.role
+        }]);
+
+      if (error) {
+        console.error('Error adding user:', error);
+        return;
+      }
+
+      // Refresh users list
+      await fetchUsers();
+      
+      // Reset form and close dialog
+      setNewUser({ username: "", password: "", role: "staff" });
+      setShowAddUser(false);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "admin": return "default";
@@ -221,7 +257,7 @@ export const UsersPanel = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button>
+              <Button onClick={() => setShowAddUser(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add User
               </Button>
@@ -401,6 +437,63 @@ export const UsersPanel = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Add User Dialog */}
+        {showAddUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md mx-4">
+              <CardHeader>
+                <CardTitle>Add New User</CardTitle>
+                <CardDescription>Create a new user account</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="newUsername">Username</Label>
+                  <Input
+                    id="newUsername"
+                    value={newUser.username}
+                    onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                    placeholder="Enter username"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="newPassword">Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                    placeholder="Enter password"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="newRole">Role</Label>
+                  <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button onClick={handleAddUser} className="flex-1">
+                    Add User
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setShowAddUser(false);
+                    setNewUser({ username: "", password: "", role: "staff" });
+                  }} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
