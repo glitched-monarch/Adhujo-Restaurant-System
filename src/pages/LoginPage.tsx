@@ -33,31 +33,17 @@ const LoginPage = () => {
     }
 
     try {
-      // Authenticate against users table in Supabase
-      const { supabase } = await import("@/integrations/supabase/client");
-      
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', username.trim())
-        .eq('password', password.trim()) // In production, use proper password hashing
-        .single();
-
-      if (error || !user) {
-        setError("Invalid username or password. Please try again.");
-        return;
-      }
-
+      // Demo mode - accept any non-empty credentials
       toast({
         title: "Login Successful",
-        description: `Welcome to Adhujo Restaurant System, ${user.username}`,
+        description: `Welcome to Adhujo Restaurant System, ${username}`,
       });
       
       // Store login state and user info
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", user.role);
-      localStorage.setItem("userId", user.id.toString());
-      localStorage.setItem("username", user.username);
+      localStorage.setItem("userRole", "admin");
+      localStorage.setItem("userId", "1");
+      localStorage.setItem("username", username);
       
       navigate("/dashboard");
     } catch (err) {
