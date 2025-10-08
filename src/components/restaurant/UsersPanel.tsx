@@ -95,18 +95,41 @@ export const UsersPanel = () => {
     }
 
     try {
-      const { error } = await supabase
+      // Insert user
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .insert([{
           username: newUser.username.trim(),
           password: newUser.password.trim(),
-          role: newUser.role
-        }]);
+          role: newUser.role // Keep for backward compatibility
+        }])
+        .select()
+        .single();
 
-      if (error) {
+      if (userError) {
         toast({
           title: "Error",
           description: "Failed to add user",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Insert role into user_roles table
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert([{
+          user_id: userData.id,
+          role: newUser.role as "admin" | "manager" | "staff"
+        }]);
+
+      if (roleError) {
+        console.error('Error adding role:', roleError);
+        // Delete the user if role assignment fails
+        await supabase.from('users').delete().eq('id', userData.id);
+        toast({
+          title: "Error",
+          description: "Failed to assign role",
           variant: "destructive",
         });
         return;

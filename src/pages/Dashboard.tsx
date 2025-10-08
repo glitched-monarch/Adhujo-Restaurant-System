@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { TouchDashboard } from "@/components/restaurant/TouchDashboard";
 import { ModernSalesPanel } from "@/components/restaurant/ModernSalesPanel";
 import { ModernInventoryPanel } from "@/components/restaurant/ModernInventoryPanel";
@@ -13,27 +14,68 @@ import { SystemSettingsPanel } from "@/components/restaurant/SystemSettingsPanel
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [userRole, setUserRole] = useState<"admin" | "manager" | "staff">("admin");
+  const [userRole, setUserRole] = useState<"admin" | "manager" | "staff">("staff");
+  const [loading, setLoading] = useState(true);
   
   const activeTab = searchParams.get('tab');
 
   useEffect(() => {
-    // Get user role from localStorage
-    const storedRole = localStorage.getItem("userRole") as "admin" | "manager" | "staff" | null;
-    if (storedRole) {
-      setUserRole(storedRole);
-    }
+    const fetchUserRole = async () => {
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', parseInt(userId))
+          .single();
+
+        if (!error && data) {
+          setUserRole(data.role as "admin" | "manager" | "staff");
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserRole();
   }, []);
 
   const handleLogout = () => {
     window.location.href = "/login";
   };
 
-  const canAccessUsers = userRole === "admin";
-  const canAccessExpenses = userRole === "admin" || userRole === "manager";
-  const canAccessReports = userRole === "admin" || userRole === "manager";
-  const canAccessMenu = userRole === "admin" || userRole === "manager";
-  const canAccessSettings = userRole === "admin";
+  // Role-based access control
+  // Staff: Can add sales, view inventory (read-only), view reports (sales & inventory only)
+  const isStaff = userRole === "staff";
+  const isManager = userRole === "manager";
+  const isAdmin = userRole === "admin";
+
+  const canAccessSales = true; // All roles can access sales
+  const canAccessInventory = true; // All roles (read-only for staff)
+  const canAccessMenu = isAdmin || isManager;
+  const canAccessExpenses = isAdmin || isManager;
+  const canAccessReports = true; // All roles (limited view for staff)
+  const canAccessUsers = isAdmin;
+  const canAccessSettings = isAdmin;
+  const canAccessLogs = isAdmin;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show touch dashboard if no specific tab is selected
   if (!activeTab) {
@@ -43,21 +85,22 @@ const Dashboard = () => {
   const renderActivePanel = () => {
     switch (activeTab) {
       case 'sales':
-        return <ModernSalesPanel />;
+        return canAccessSales ? <ModernSalesPanel /> : <TouchDashboard userRole={userRole} />;
       case 'inventory':
-        return <ModernInventoryPanel />;
+        // Staff can view but not modify inventory
+        return canAccessInventory ? <ModernInventoryPanel /> : <TouchDashboard userRole={userRole} />;
       case 'menu':
-        return canAccessMenu ? <ModernMenuPanel /> : <div>Access Denied</div>;
+        return canAccessMenu ? <ModernMenuPanel /> : <TouchDashboard userRole={userRole} />;
       case 'expenses':
-        return canAccessExpenses ? <ModernExpensePanel /> : <div>Access Denied</div>;
+        return canAccessExpenses ? <ModernExpensePanel /> : <TouchDashboard userRole={userRole} />;
       case 'reports':
-        return <UnifiedReportsPanel userRole={userRole} />;
+        return canAccessReports ? <UnifiedReportsPanel userRole={userRole} /> : <TouchDashboard userRole={userRole} />;
       case 'users':
-        return canAccessUsers ? <UsersPanel /> : <div>Access Denied</div>;
+        return canAccessUsers ? <UsersPanel /> : <TouchDashboard userRole={userRole} />;
       case 'logs':
-        return canAccessUsers ? <AccessLogsPanel /> : <div>Access Denied</div>;
+        return canAccessLogs ? <AccessLogsPanel /> : <TouchDashboard userRole={userRole} />;
       case 'settings':
-        return canAccessSettings ? <SystemSettingsPanel /> : <div>Access Denied</div>;
+        return canAccessSettings ? <SystemSettingsPanel /> : <TouchDashboard userRole={userRole} />;
       default:
         return <TouchDashboard userRole={userRole} />;
     }
