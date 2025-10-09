@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Utensils, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -33,17 +34,43 @@ const LoginPage = () => {
     }
 
     try {
-      // Demo mode - accept any non-empty credentials
-      toast({
-        title: "Login Successful",
-        description: `Welcome to Adhujo Restaurant System, ${username}`,
-      });
-      
+      // Validate credentials against database
+      const { data: user, error: userError } = await supabase
+        .from("users")
+        .select("id, username, password, role")
+        .eq("username", username.trim())
+        .eq("password", password.trim())
+        .maybeSingle();
+
+      if (userError || !user) {
+        setError("Invalid username or password");
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch user role from user_roles table
+      const { data: userRole, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (roleError || !userRole) {
+        setError("Unable to determine user role. Please contact administrator.");
+        setIsLoading(false);
+        return;
+      }
+
       // Store login state and user info
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", "admin");
-      localStorage.setItem("userId", "1");
-      localStorage.setItem("username", username);
+      localStorage.setItem("userRole", userRole.role);
+      localStorage.setItem("userId", user.id.toString());
+      localStorage.setItem("username", user.username);
+
+      toast({
+        title: "Login Successful",
+        description: `Welcome to Adhujo Restaurant System, ${user.username}`,
+      });
       
       navigate("/dashboard");
     } catch (err) {
