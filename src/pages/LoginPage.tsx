@@ -34,42 +34,26 @@ const LoginPage = () => {
     }
 
     try {
-      // Validate credentials against database
-      const { data: user, error: userError } = await supabase
-        .from("users")
-        .select("id, username, password, role")
-        .eq("username", username.trim())
-        .eq("password", password.trim())
-        .maybeSingle();
+      // Call login edge function
+      const { data, error } = await supabase.functions.invoke('login', {
+        body: { username: username.trim(), password: password.trim() }
+      });
 
-      if (userError || !user) {
-        setError("Invalid username or password");
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch user role from user_roles table
-      const { data: userRole, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (roleError || !userRole) {
-        setError("Unable to determine user role. Please contact administrator.");
+      if (error || data?.error) {
+        setError(data?.error || "Invalid username or password");
         setIsLoading(false);
         return;
       }
 
       // Store login state and user info
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", userRole.role);
-      localStorage.setItem("userId", user.id.toString());
-      localStorage.setItem("username", user.username);
+      localStorage.setItem("userRole", data.role);
+      localStorage.setItem("userId", data.id.toString());
+      localStorage.setItem("username", data.username);
 
       toast({
         title: "Login Successful",
-        description: `Welcome to Adhujo Restaurant System, ${user.username}`,
+        description: `Welcome to Adhujo Restaurant System, ${data.username}`,
       });
       
       navigate("/dashboard");
